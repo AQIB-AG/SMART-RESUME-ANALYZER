@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Job - Smart Resume Analyzer</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        
+        .job-post-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .skill-tag {
+            background-color: #e0e7ff;
+            color: var(--primary-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 5px 5px 5px 0;
+            display: inline-block;
+        }
+        
+        .skill-input {
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-person-check me-2"></i>
+                <span class="fw-bold">Smart Resume Analyzer</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/recruiter-dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/job-post">Post Job</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container job-post-container">
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2 fw-bold">Post a New Job</h2>
+                    <p class="mb-0">Create a job posting to attract qualified candidates</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-card">
+            <form id="jobPostForm">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="jobTitle" class="form-label fw-semibold">Job Title *</label>
+                        <input type="text" class="form-control" id="jobTitle" placeholder="e.g., Software Engineer" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="jobType" class="form-label fw-semibold">Job Type</label>
+                        <select class="form-select" id="jobType">
+                            <option value="fulltime">Full-time</option>
+                            <option value="parttime">Part-time</option>
+                            <option value="contract">Contract</option>
+                            <option value="internship">Internship</option>
+                            <option value="remote">Remote</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="experienceLevel" class="form-label fw-semibold">Experience Level</label>
+                        <select class="form-select" id="experienceLevel">
+                            <option value="entry">Entry Level</option>
+                            <option value="mid">Mid Level</option>
+                            <option value="senior">Senior Level</option>
+                            <option value="executive">Executive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="location" class="form-label fw-semibold">Location</label>
+                        <input type="text" class="form-control" id="location" placeholder="e.g., New York, NY">
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="salaryMin" class="form-label fw-semibold">Minimum Salary ($)</label>
+                        <input type="number" class="form-control" id="salaryMin" placeholder="e.g., 70000">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="salaryMax" class="form-label fw-semibold">Maximum Salary ($)</label>
+                        <input type="number" class="form-control" id="salaryMax" placeholder="e.g., 120000">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="jobDescription" class="form-label fw-semibold">Job Description *</label>
+                    <textarea class="form-control" id="jobDescription" rows="5" placeholder="Describe the job responsibilities, requirements, and company culture..." required></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Required Skills *</label>
+                    <div class="mb-2">
+                        <input type="text" class="form-control skill-input" id="skillInput" placeholder="Type a skill and press Enter">
+                    </div>
+                    <div id="skillsContainer" class="mb-2">
+                        <!-- Skills will be added here -->
+                    </div>
+                    <div class="form-text">Press Enter after typing each skill to add it</div>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="requirements" class="form-label fw-semibold">Additional Requirements</label>
+                    <textarea class="form-control" id="requirements" rows="3" placeholder="List any additional requirements or qualifications"></textarea>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="deadline" class="form-label fw-semibold">Application Deadline</label>
+                    <input type="date" class="form-control" id="deadline">
+                </div>
+                
+                <div class="d-flex gap-3">
+                    <button type="submit" class="btn btn-primary flex-grow-1 py-3">
+                        <i class="bi bi-briefcase me-2"></i>
+                        Post Job
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary flex-grow-1 py-3" id="previewBtn">
+                        <i class="bi bi-eye me-2"></i>
+                        Preview
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const skillsContainer = document.getElementById('skillsContainer');
+            const skillInput = document.getElementById('skillInput');
+            const jobPostForm = document.getElementById('jobPostForm');
+            
+            let skills = [];
+            
+            // Add skill when Enter is pressed
+            skillInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSkill(skillInput.value.trim());
+                    skillInput.value = '';
+                }
+            });
+            
+            // Add skill function
+            function addSkill(skill) {
+                if (skill && !skills.includes(skill.toLowerCase())) {
+                    skills.push(skill.toLowerCase());
+                    
+                    const skillTag = document.createElement('span');
+                    skillTag.className = 'skill-tag d-flex align-items-center';
+                    skillTag.innerHTML = `
+                        <span>${skill}</span>
+                        <i class="bi bi-x ms-2 cursor-pointer" onclick="removeSkill('${skill}')"></i>
+                    `;
+                    
+                    skillsContainer.appendChild(skillTag);
+                }
+            }
+            
+            // Remove skill function (global so it can be called from HTML)
+            window.removeSkill = function(skill) {
+                skills = skills.filter(s => s !== skill.toLowerCase());
+                
+                // Remove the skill tag
+                const skillTags = document.querySelectorAll('.skill-tag');
+                skillTags.forEach(tag => {
+                    if (tag.textContent.includes(skill)) {
+                        tag.remove();
+                    }
+                });
+            };
+            
+            // Form submission
+            jobPostForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form data
+                const formData = {
+                    title: document.getElementById('jobTitle').value,
+                    description: document.getElementById('jobDescription').value,
+                    requirements: document.getElementById('requirements').value,
+                    skills_required: skills,
+                    experience_level: document.getElementById('experienceLevel').value,
+                    job_type: document.getElementById('jobType').value,
+                    location: document.getElementById('location').value,
+                    salary_min: document.getElementById('salaryMin').value,
+                    salary_max: document.getElementById('salaryMax').value,
+                    deadline: document.getElementById('deadline').value
+                };
+                
+                // Validate required fields
+                if (!formData.title || !formData.description || skills.length === 0) {
+                    alert('Please fill in all required fields: Job Title, Description, and at least one skill');
+                    return;
+                }
+                
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Posting...';
+                submitBtn.disabled = true;
+                
+                // In a real application, you would send this to your backend
+                // For now, we'll simulate the API call
+                setTimeout(() => {
+                    // Reset button
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    
+                    // Show success message
+                    alert('Job posted successfully!');
+                    
+                    // Reset form
+                    jobPostForm.reset();
+                    skills = [];
+                    skillsContainer.innerHTML = '';
+                }, 2000);
+            });
+            
+            // Preview button
+            document.getElementById('previewBtn').addEventListener('click', function() {
+                alert('In a full implementation, this would show a preview of the job posting');
+            });
+        });
+    </script>
+</body>
+</html>

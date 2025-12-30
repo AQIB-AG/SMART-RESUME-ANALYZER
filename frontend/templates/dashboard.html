@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Dashboard - Smart Resume Analyzer</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .progress {
+            height: 12px;
+            border-radius: 6px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .skill-tag {
+            background-color: #e0e7ff;
+            color: var(--primary-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .missing-skill {
+            background-color: #fee2e2;
+            color: #ef4444;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .resume-preview {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-person-check me-2"></i>
+                <span class="fw-bold">Smart Resume Analyzer</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/jobs">Job Recommendations</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/skillgap">Skill Gap Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">Upload Resume</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container dashboard-container">
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2 fw-bold">Resume Analysis Dashboard</h2>
+                    <p class="mb-0">Your comprehensive resume insights and recommendations</p>
+                </div>
+                <div>
+                    <a href="/upload" class="btn btn-light">Upload New Resume</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">87%</h3>
+                    <p class="text-muted mb-0">ATS Score</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 87%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">24</h3>
+                    <p class="text-muted mb-0">Skills Identified</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 90%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">12</h3>
+                    <p class="text-muted mb-0">Jobs Matched</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">3</h3>
+                    <p class="text-muted mb-0">Skills to Improve</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 30%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="section-card">
+                    <h4 class="mb-4 fw-bold">Resume Analysis</h4>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Extracted Skills</h5>
+                            <div class="skills-container">
+                                <span class="skill-tag">Python</span>
+                                <span class="skill-tag">JavaScript</span>
+                                <span class="skill-tag">React</span>
+                                <span class="skill-tag">Node.js</span>
+                                <span class="skill-tag">SQL</span>
+                                <span class="skill-tag">MongoDB</span>
+                                <span class="skill-tag">AWS</span>
+                                <span class="skill-tag">Docker</span>
+                                <span class="skill-tag">Git</span>
+                                <span class="skill-tag">Agile</span>
+                                <span class="skill-tag">Project Management</span>
+                                <span class="skill-tag">Team Leadership</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-3">Missing Skills</h5>
+                            <div class="skills-container">
+                                <span class="skill-tag missing-skill">Kubernetes</span>
+                                <span class="skill-tag missing-skill">TensorFlow</span>
+                                <span class="skill-tag missing-skill">CI/CD</span>
+                                <span class="skill-tag missing-skill">React Native</span>
+                                <span class="skill-tag missing-skill">GraphQL</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mb-3">Keyword Optimization</h5>
+                    <p class="text-muted">Your resume contains 85% of the keywords from job descriptions in your field. Consider adding more technical keywords related to your desired role.</p>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>Improvement Tip:</strong> Add more specific metrics and achievements to your experience section to increase your ATS score.
+                    </div>
+                </div>
+                
+                <div class="section-card">
+                    <h4 class="mb-4 fw-bold">Resume Sections</h4>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-check-circle-fill text-success h2 mb-2"></i>
+                                    <h6 class="card-title">Contact Info</h6>
+                                    <p class="card-text text-success mb-0">Complete</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-check-circle-fill text-success h2 mb-2"></i>
+                                    <h6 class="card-title">Experience</h6>
+                                    <p class="card-text text-success mb-0">Complete</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-exclamation-circle-fill text-warning h2 mb-2"></i>
+                                    <h6 class="card-title">Skills</h6>
+                                    <p class="card-text text-warning mb-0">Could be improved</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-check-circle-fill text-success h2 mb-2"></i>
+                                    <h6 class="card-title">Education</h6>
+                                    <p class="card-text text-success mb-0">Complete</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-x-circle-fill text-danger h2 mb-2"></i>
+                                    <h6 class="card-title">Certifications</h6>
+                                    <p class="card-text text-danger mb-0">Missing</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-check-circle-fill text-success h2 mb-2"></i>
+                                    <h6 class="card-title">Projects</h6>
+                                    <p class="card-text text-success mb-0">Complete</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="section-card">
+                    <h4 class="mb-4 fw-bold">Resume Preview</h4>
+                    <div class="resume-preview">
+                        <h5 class="mb-3 text-primary">John Doe</h5>
+                        <p class="text-muted mb-3">Senior Software Engineer | Full Stack Developer</p>
+                        <p class="mb-3">Email: john.doe@example.com | Phone: (123) 456-7890</p>
+                        <p class="mb-3">Location: New York, NY | LinkedIn: linkedin.com/in/johndoe</p>
+                        
+                        <h6 class="mt-4 mb-2 fw-bold">Professional Summary</h6>
+                        <p class="mb-3">Experienced Full Stack Developer with 5+ years of expertise in building scalable web applications using modern technologies.</p>
+                        
+                        <h6 class="mt-4 mb-2 fw-bold">Experience</h6>
+                        <p class="mb-1 fw-semibold">Senior Software Engineer | Tech Corp | 2020-Present</p>
+                        <ul class="mb-3">
+                            <li>Developed and maintained web applications using React and Node.js</li>
+                            <li>Improved application performance by 40% through optimization</li>
+                        </ul>
+                        
+                        <h6 class="mt-4 mb-2 fw-bold">Education</h6>
+                        <p class="mb-1 fw-semibold">B.S. in Computer Science | University of Tech | 2016</p>
+                        
+                        <h6 class="mt-4 mb-2 fw-bold">Skills</h6>
+                        <p>JavaScript, Python, React, Node.js, SQL, AWS, Docker, Git</p>
+                    </div>
+                </div>
+                
+                <div class="section-card">
+                    <h4 class="mb-4 fw-bold">Next Steps</h4>
+                    <div class="list-group">
+                        <a href="/jobs" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-briefcase me-2 text-primary"></i>
+                                View Job Recommendations
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="/skillgap" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-lightbulb me-2 text-primary"></i>
+                                Improve Skills
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-download me-2 text-primary"></i>
+                                Download Report
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <a href="/upload" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark-arrow-up me-2 text-primary"></i>
+                                Upload Updated Resume
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Recommendations - Smart Resume Analyzer</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        
+        .jobs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .job-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .match-score {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        .high-match {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #065f46;
+        }
+        
+        .medium-match {
+            background-color: rgba(251, 191, 36, 0.15);
+            color: #92400e;
+        }
+        
+        .low-match {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #7f1d1d;
+        }
+        
+        .skills-match {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .skill-match {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .matched-skill {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #065f46;
+        }
+        
+        .missing-skill {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #7f1d1d;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .job-type-badge {
+            background-color: #e0e7ff;
+            color: var(--primary-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-person-check me-2"></i>
+                <span class="fw-bold">Smart Resume Analyzer</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/jobs">Job Recommendations</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/skillgap">Skill Gap Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">Upload Resume</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container jobs-container">
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2 fw-bold">Job Recommendations</h2>
+                    <p class="mb-0">Based on your skills and experience profile</p>
+                </div>
+                <div>
+                    <button class="btn btn-light">Filter Jobs</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-section">
+            <h5 class="mb-3 fw-bold">Filter by</h5>
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Match Percentage</label>
+                    <select class="form-select">
+                        <option>All Matches</option>
+                        <option>90% and above</option>
+                        <option>70% - 89%</option>
+                        <option>50% - 69%</option>
+                        <option>Below 50%</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Job Type</label>
+                    <select class="form-select">
+                        <option>All Types</option>
+                        <option>Full-time</option>
+                        <option>Part-time</option>
+                        <option>Contract</option>
+                        <option>Remote</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Experience Level</label>
+                    <select class="form-select">
+                        <option>All Levels</option>
+                        <option>Entry Level</option>
+                        <option>Mid Level</option>
+                        <option>Senior Level</option>
+                        <option>Executive</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Sort By</label>
+                    <select class="form-select">
+                        <option>Best Match</option>
+                        <option>Highest Match</option>
+                        <option>Most Recent</option>
+                        <option>Salary (High to Low)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <h4 class="mb-4 fw-bold">Recommended Jobs</h4>
+                
+                <!-- Job 1 -->
+                <div class="job-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">Senior Full Stack Developer</h5>
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-building me-1"></i> Tech Innovations Inc. 
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-geo-alt me-1"></i> San Francisco, CA
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-cash me-1"></i> $120k - $150k
+                            </p>
+                        </div>
+                        <div class="match-score high-match">92% Match</div>
+                    </div>
+                    
+                    <p class="mb-3">We're looking for a Senior Full Stack Developer with expertise in modern web technologies to join our growing team. You'll be responsible for developing scalable web applications and mentoring junior developers.</p>
+                    
+                    <div class="mb-3">
+                        <span class="job-type-badge me-2">Full-time</span>
+                        <span class="job-type-badge me-2">Remote</span>
+                        <span class="job-type-badge">Senior Level</span>
+                    </div>
+                    
+                    <h6 class="mb-2 fw-bold">Skills Match</h6>
+                    <div class="skills-match">
+                        <span class="skill-match matched-skill">Python <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">JavaScript <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">React <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">Node.js <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match missing-skill">Kubernetes <i class="bi bi-x ms-1"></i></span>
+                        <span class="skill-match missing-skill">GraphQL <i class="bi bi-x ms-1"></i></span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">Posted 2 days ago</small>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2">Save Job</button>
+                            <a href="#" class="btn btn-primary btn-sm">Apply Now</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Job 2 -->
+                <div class="job-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">Frontend Developer</h5>
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-building me-1"></i> Digital Solutions LLC 
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-geo-alt me-1"></i> New York, NY
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-cash me-1"></i> $90k - $110k
+                            </p>
+                        </div>
+                        <div class="match-score high-match">87% Match</div>
+                    </div>
+                    
+                    <p class="mb-3">Join our dynamic team as a Frontend Developer to create beautiful and responsive user interfaces. You'll work with the latest frontend technologies and collaborate with UX designers.</p>
+                    
+                    <div class="mb-3">
+                        <span class="job-type-badge me-2">Full-time</span>
+                        <span class="job-type-badge">Mid Level</span>
+                    </div>
+                    
+                    <h6 class="mb-2 fw-bold">Skills Match</h6>
+                    <div class="skills-match">
+                        <span class="skill-match matched-skill">JavaScript <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">React <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">CSS <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match missing-skill">Vue.js <i class="bi bi-x ms-1"></i></span>
+                        <span class="skill-match missing-skill">Svelte <i class="bi bi-x ms-1"></i></span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">Posted 1 day ago</small>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2">Save Job</button>
+                            <a href="#" class="btn btn-primary btn-sm">Apply Now</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Job 3 -->
+                <div class="job-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">Backend Engineer</h5>
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-building me-1"></i> Cloud Systems Ltd 
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-geo-alt me-1"></i> Seattle, WA
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-cash me-1"></i> $110k - $130k
+                            </p>
+                        </div>
+                        <div class="match-score medium-match">75% Match</div>
+                    </div>
+                    
+                    <p class="mb-3">We're seeking a Backend Engineer to design and implement scalable APIs and services. You'll work with microservices architecture and cloud technologies to build robust backend systems.</p>
+                    
+                    <div class="mb-3">
+                        <span class="job-type-badge me-2">Full-time</span>
+                        <span class="job-type-badge me-2">Remote</span>
+                        <span class="job-type-badge">Senior Level</span>
+                    </div>
+                    
+                    <h6 class="mb-2 fw-bold">Skills Match</h6>
+                    <div class="skills-match">
+                        <span class="skill-match matched-skill">Python <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">Node.js <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">SQL <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match missing-skill">Go <i class="bi bi-x ms-1"></i></span>
+                        <span class="skill-match missing-skill">Rust <i class="bi bi-x ms-1"></i></span>
+                        <span class="skill-match missing-skill">Kafka <i class="bi bi-x ms-1"></i></span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">Posted 3 days ago</small>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2">Save Job</button>
+                            <a href="#" class="btn btn-primary btn-sm">Apply Now</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Job 4 -->
+                <div class="job-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="mb-2">Full Stack Developer</h5>
+                            <p class="text-muted mb-1">
+                                <i class="bi bi-building me-1"></i> Startup Hub 
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-geo-alt me-1"></i> Austin, TX
+                                <span class="mx-2">•</span>
+                                <i class="bi bi-cash me-1"></i> $85k - $105k
+                            </p>
+                        </div>
+                        <div class="match-score medium-match">68% Match</div>
+                    </div>
+                    
+                    <p class="mb-3">Join our fast-growing startup as a Full Stack Developer. You'll work on various projects from concept to deployment, using modern technologies and agile methodologies.</p>
+                    
+                    <div class="mb-3">
+                        <span class="job-type-badge me-2">Full-time</span>
+                        <span class="job-type-badge">Mid Level</span>
+                    </div>
+                    
+                    <h6 class="mb-2 fw-bold">Skills Match</h6>
+                    <div class="skills-match">
+                        <span class="skill-match matched-skill">JavaScript <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">React <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match matched-skill">Node.js <i class="bi bi-check ms-1"></i></span>
+                        <span class="skill-match missing-skill">Angular <i class="bi bi-x ms-1"></i></span>
+                        <span class="skill-match missing-skill">TypeScript <i class="bi bi-x ms-1"></i></span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <small class="text-muted">Posted 4 days ago</small>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-2">Save Job</button>
+                            <a href="#" class="btn btn-primary btn-sm">Apply Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0 fw-bold">Your Match Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>High Matches (90%+)</span>
+                            <span class="badge bg-success">3</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Medium Matches (70-89%)</span>
+                            <span class="badge bg-warning">4</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Low Matches (&lt;70%)</span>
+                            <span class="badge bg-danger">2</span>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h6 class="mb-3 fw-bold">Top Skills in Demand</h6>
+                        <div class="skills-match">
+                            <span class="skill-match matched-skill">JavaScript</span>
+                            <span class="skill-match matched-skill">Python</span>
+                            <span class="skill-match matched-skill">React</span>
+                            <span class="skill-match missing-skill">AWS</span>
+                            <span class="skill-match missing-skill">Docker</span>
+                            <span class="skill-match missing-skill">Kubernetes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0 fw-bold">Saved Jobs</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">You haven't saved any jobs yet.</p>
+                        <p class="text-muted small">Click the "Save Job" button on any job listing to save it for later.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

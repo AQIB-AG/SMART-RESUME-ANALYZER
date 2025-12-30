@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Gap Analysis - Smart Resume Analyzer</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        
+        .skillgap-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .progress {
+            height: 12px;
+            border-radius: 6px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .skill-category {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .skill-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .skill-item:last-child {
+            border-bottom: none;
+        }
+        
+        .skill-level {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .level-high {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #065f46;
+        }
+        
+        .level-medium {
+            background-color: rgba(251, 191, 36, 0.15);
+            color: #92400e;
+        }
+        
+        .level-low {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #7f1d1d;
+        }
+        
+        .resource-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .resource-icon {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(67, 97, 238, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-person-check me-2"></i>
+                <span class="fw-bold">Smart Resume Analyzer</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/jobs">Job Recommendations</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/skillgap">Skill Gap Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/upload">Upload Resume</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container skillgap-container">
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2 fw-bold">Skill Gap Analysis</h2>
+                    <p class="mb-0">Identify missing skills and opportunities for improvement</p>
+                </div>
+                <div>
+                    <a href="/upload" class="btn btn-light">Analyze Another Resume</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">12</h3>
+                    <p class="text-muted mb-0">Skills to Improve</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 30%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">8</h3>
+                    <p class="text-muted mb-0">High Priority</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 60%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">24</h3>
+                    <p class="text-muted mb-0">Total Skills</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 80%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">72%</h3>
+                    <p class="text-muted mb-0">Skill Coverage</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 72%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="skill-category">
+                    <h4 class="mb-4 fw-bold">Missing Technical Skills</h4>
+                    
+                    <div class="skill-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Kubernetes</h6>
+                                <p class="text-muted mb-0">Container orchestration platform</p>
+                            </div>
+                            <div>
+                                <span class="skill-level level-low">Low</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2">Learn Now</button>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-semibold">TensorFlow</h6>
+                                <p class="text-muted mb-0">Machine learning framework</p>
+                            </div>
+                            <div>
+                                <span class="skill-level level-low">Low</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2">Learn Now</button>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 15%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-semibold">CI/CD</h6>
+                                <p class="text-muted mb-0">Continuous integration and deployment</p>
+                            </div>
+                            <div>
+                                <span class="skill-level level-medium">Medium</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2">Learn Now</button>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-semibold">React Native</h6>
+                                <p class="text-muted mb-0">Cross-platform mobile development</p>
+                            </div>
+                            <div>
+                                <span class="skill-level level-low">Low</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2">Learn Now</button>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 25%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-semibold">GraphQL</h6>
+                                <p class="text-muted mb-0">API query language</p>
+                            </div>
+                            <div>
+                                <span class="skill-level level-medium">Medium</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2">Learn Now</button>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 40%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skill-category">
+                    <h4 class="mb-4 fw-bold">Missing Soft Skills</h4>
+                    
+                    <div class="skill-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Leadership</h6>
+                                <p class="text-muted mb-0">Team management and guidance</p>
+                            </div>
+                            <div>
+                                <span class="skill-level level-medium">Medium</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2">Learn Now</button>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-semibold">Communication</h6>
+                                <p class="text-muted mb-0">Effective verbal and written communication</p>
+                            </div>
+                            <div>
+                                <span class="skill-level level-high">High</span>
+                                <button class="btn btn-outline-primary btn-sm ms-2">Enhance</button>
+                            </div>
+                        </div>
+                        <div class="progress mt-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 80%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0 fw-bold">Recommended Learning Paths</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="resource-icon me-3">
+                                <i class="bi bi-code-slash"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Cloud & DevOps</h6>
+                                <small class="text-muted">Kubernetes, Docker, CI/CD</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="resource-icon me-3">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Machine Learning</h6>
+                                <small class="text-muted">TensorFlow, PyTorch, Scikit-learn</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="resource-icon me-3">
+                                <i class="bi bi-phone"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Mobile Development</h6>
+                                <small class="text-muted">React Native, Flutter</small>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex align-items-center">
+                            <div class="resource-icon me-3">
+                                <i class="bi bi-globe"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Full Stack</h6>
+                                <small class="text-muted">GraphQL, Modern frameworks</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0 fw-bold">Recommended Resources</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="resource-card">
+                            <h6 class="mb-1">Kubernetes in Action</h6>
+                            <p class="text-muted mb-2 small">Book by Marko Lukša</p>
+                            <a href="#" class="btn btn-sm btn-outline-primary">Get Resource</a>
+                        </div>
+                        
+                        <div class="resource-card">
+                            <h6 class="mb-1">TensorFlow Developer Certificate</h6>
+                            <p class="text-muted mb-2 small">Coursera Course</p>
+                            <a href="#" class="btn btn-sm btn-outline-primary">Enroll Now</a>
+                        </div>
+                        
+                        <div class="resource-card">
+                            <h6 class="mb-1">Complete React Native Course</h6>
+                            <p class="text-muted mb-2 small">Udemy Course</p>
+                            <a href="#" class="btn btn-sm btn-outline-primary">Enroll Now</a>
+                        </div>
+                        
+                        <div class="resource-card">
+                            <h6 class="mb-1">GraphQL with React Course</h6>
+                            <p class="text-muted mb-2 small">Udemy Course</p>
+                            <a href="#" class="btn btn-sm btn-outline-primary">Enroll Now</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0 fw-bold">Career Suggestions</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>DevOps Engineer</span>
+                                <span class="badge bg-primary">85%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Full Stack Developer</span>
+                                <span class="badge bg-success">78%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Machine Learning Engineer</span>
+                                <span class="badge bg-warning">65%</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Mobile App Developer</span>
+                                <span class="badge bg-info">70%</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Smart Resume Analyzer</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 40px;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 20px;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .progress {
+            height: 12px;
+            border-radius: 6px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .user-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid #0d6efd;
+        }
+        
+        .activity-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-person-check me-2"></i>
+                <span class="fw-bold">Smart Resume Analyzer</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin-dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Users</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Jobs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Analytics</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Settings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container dashboard-container">
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-2 fw-bold">Admin Dashboard</h2>
+                    <p class="mb-0">Platform analytics and user management</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">1,248</h3>
+                    <p class="text-muted mb-0">Total Users</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">867</h3>
+                    <p class="text-muted mb-0">Resumes Analyzed</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 90%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">324</h3>
+                    <p class="text-muted mb-0">Job Postings</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 60%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <h3 class="text-primary fw-bold">2,156</h3>
+                    <p class="text-muted mb-0">Job Matches</p>
+                    <div class="progress mt-2">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 85%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="section-card mb-4">
+                    <h4 class="mb-4 fw-bold">Platform Analytics</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <h6 class="mb-3">User Registration (Last 30 Days)</h6>
+                            <canvas id="userRegistrationChart" width="100%" height="200"></canvas>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <h6 class="mb-3">Resume Analysis (Last 30 Days)</h6>
+                            <canvas id="resumeAnalysisChart" width="100%" height="200"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">User Roles Distribution</h6>
+                            <canvas id="userRolesChart" width="100%" height="200"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Job Types Distribution</h6>
+                            <canvas id="jobTypesChart" width="100%" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0 fw-bold">Recent User Activity</h4>
+                        <a href="#" class="text-decoration-none">View All</a>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-0">New User Registration</h6>
+                                <p class="text-muted mb-0">John Doe registered as Candidate</p>
+                            </div>
+                            <small class="text-muted">5 mins ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Resume Uploaded</h6>
+                                <p class="text-muted mb-0">Jane Smith uploaded resume</p>
+                            </div>
+                            <small class="text-muted">15 mins ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Job Posted</h6>
+                                <p class="text-muted mb-0">Tech Corp posted Software Engineer position</p>
+                            </div>
+                            <small class="text-muted">1 hour ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-0">Account Deactivated</h6>
+                                <p class="text-muted mb-0">Robert Johnson account deactivated</p>
+                            </div>
+                            <small class="text-muted">2 hours ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-0">New User Registration</h6>
+                                <p class="text-muted mb-0">Emily Davis registered as Recruiter</p>
+                            </div>
+                            <small class="text-muted">3 hours ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="section-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0 fw-bold">Recent Users</h4>
+                        <a href="#" class="text-decoration-none">View All</a>
+                    </div>
+                    
+                    <div class="user-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">John Smith</h6>
+                                <p class="text-muted mb-1">john@example.com</p>
+                                <span class="badge bg-primary">Candidate</span>
+                            </div>
+                            <small class="text-muted">5 mins ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="user-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Jane Doe</h6>
+                                <p class="text-muted mb-1">jane@example.com</p>
+                                <span class="badge bg-success">Recruiter</span>
+                            </div>
+                            <small class="text-muted">2 hours ago</small>
+                        </div>
+                    </div>
+                    
+                    <div class="user-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Michael Brown</h6>
+                                <p class="text-muted mb-1">michael@example.com</p>
+                                <span class="badge bg-primary">Candidate</span>
+                            </div>
+                            <small class="text-muted">1 day ago</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section-card mb-4">
+                    <h4 class="mb-4 fw-bold">System Status</h4>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Server Status</span>
+                        <span class="badge bg-success">Online</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Database</span>
+                        <span class="badge bg-success">Connected</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>API Status</span>
+                        <span class="badge bg-success">Operational</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Storage Usage</span>
+                        <span class="badge bg-warning">65%</span>
+                    </div>
+                    <div class="progress mt-3">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 65%"></div>
+                    </div>
+                </div>
+                
+                <div class="section-card">
+                    <h4 class="mb-4 fw-bold">Quick Actions</h4>
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-primary">
+                            <i class="bi bi-people me-2"></i>
+                            Manage Users
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-briefcase me-2"></i>
+                            Manage Jobs
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-gear me-2"></i>
+                            System Settings
+                        </a>
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            View Reports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // User Registration Chart
+            const regCtx = document.getElementById('userRegistrationChart').getContext('2d');
+            const userRegistrationChart = new Chart(regCtx, {
+                type: 'line',
+                data: {
+                    labels: ['7 days ago', '6 days ago', '5 days ago', '4 days ago', '3 days ago', '2 days ago', 'Today'],
+                    datasets: [{
+                        label: 'New Registrations',
+                        data: [12, 19, 15, 22, 18, 25, 20],
+                        borderColor: 'rgba(67, 97, 238, 1)',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Resume Analysis Chart
+            const analysisCtx = document.getElementById('resumeAnalysisChart').getContext('2d');
+            const resumeAnalysisChart = new Chart(analysisCtx, {
+                type: 'line',
+                data: {
+                    labels: ['7 days ago', '6 days ago', '5 days ago', '4 days ago', '3 days ago', '2 days ago', 'Today'],
+                    datasets: [{
+                        label: 'Resumes Analyzed',
+                        data: [32, 28, 45, 38, 52, 41, 35],
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // User Roles Chart
+            const rolesCtx = document.getElementById('userRolesChart').getContext('2d');
+            const userRolesChart = new Chart(rolesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Candidates', 'Recruiters', 'Admins'],
+                    datasets: [{
+                        data: [950, 280, 18],
+                        backgroundColor: [
+                            'rgba(67, 97, 238, 0.7)',
+                            'rgba(251, 191, 36, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Job Types Chart
+            const typesCtx = document.getElementById('jobTypesChart').getContext('2d');
+            const jobTypesChart = new Chart(typesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Full-time', 'Part-time', 'Contract', 'Remote', 'Internship'],
+                    datasets: [{
+                        data: [180, 45, 32, 58, 9],
+                        backgroundColor: [
+                            'rgba(67, 97, 238, 0.7)',
+                            'rgba(251, 191, 36, 0.7)',
+                            'rgba(255, 138, 101, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(142, 142, 222, 0.7)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
