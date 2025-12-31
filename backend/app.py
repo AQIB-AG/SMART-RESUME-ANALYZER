@@ -5,8 +5,12 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 
-# Initialize Flask app
-app = Flask(__name__)
+# Initialize Flask app with custom template and static folders
+app = Flask(
+    __name__,
+    template_folder='../frontend/templates',
+    static_folder='../frontend/static'
+)
 
 # Configuration
 app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
