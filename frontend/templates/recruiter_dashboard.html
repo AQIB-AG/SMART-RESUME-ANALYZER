@@ -8,91 +8,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-        }
-        
-        body {
-            background-color: #f8f9fa;
-            padding-top: 20px;
-            padding-bottom: 40px;
-        }
-        
-        .dashboard-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .stats-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 20px;
-            text-align: center;
-            height: 100%;
-        }
-        
-        .progress {
-            height: 12px;
-            border-radius: 6px;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 500;
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .section-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-        
-        .job-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--primary-color);
-        }
-        
-        .candidate-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 15px;
-            margin-bottom: 15px;
-            border-left: 3px solid #28a745;
-        }
-    </style>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
                 <i class="bi bi-person-check me-2"></i>
@@ -128,15 +51,16 @@
         </div>
     </nav>
 
-    <div class="container dashboard-container">
-        <div class="header">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-2 fw-bold">Recruiter Dashboard</h2>
-                    <p class="mb-0">Manage your job postings and candidate applications</p>
-                </div>
-                <div>
-                    <a href="/job-post" class="btn btn-light">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="card card-gradient mb-5 fade-in">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h2 class="text-white mb-2 fw-bold">Recruiter Dashboard</h2>
+                        <p class="text-white-50 mb-0">Manage your job postings and candidate applications</p>
+                    </div>
+                    <a href="/job-post" class="btn btn-light mt-3 mt-md-0">
                         <i class="bi bi-plus-circle me-2"></i>
                         Post New Job
                     </a>
@@ -144,39 +68,40 @@
             </div>
         </div>
         
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="stats-card">
-                    <h3 class="text-primary fw-bold">5</h3>
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card fade-in">
+                    <h3 class="text-gradient">5</h3>
                     <p class="text-muted mb-0">Active Jobs</p>
-                    <div class="progress mt-2">
-                        <div class="progress-bar bg-info" role="progressbar" style="width: 65%"></div>
+                    <div class="progress mt-3">
+                        <div class="progress-bar" role="progressbar" style="width: 65%"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-card">
-                    <h3 class="text-primary fw-bold">42</h3>
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card fade-in">
+                    <h3 class="text-gradient">42</h3>
                     <p class="text-muted mb-0">Total Applications</p>
-                    <div class="progress mt-2">
+                    <div class="progress mt-3">
                         <div class="progress-bar bg-success" role="progressbar" style="width: 80%"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-card">
-                    <h3 class="text-primary fw-bold">12</h3>
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card fade-in">
+                    <h3 class="text-gradient">12</h3>
                     <p class="text-muted mb-0">New This Week</p>
-                    <div class="progress mt-2">
+                    <div class="progress mt-3">
                         <div class="progress-bar bg-warning" role="progressbar" style="width: 45%"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-card">
-                    <h3 class="text-primary fw-bold">8</h3>
+            <div class="col-md-3 col-sm-6">
+                <div class="stats-card fade-in">
+                    <h3 class="text-gradient">8</h3>
                     <p class="text-muted mb-0">In Review</p>
-                    <div class="progress mt-2">
+                    <div class="progress mt-3">
                         <div class="progress-bar bg-danger" role="progressbar" style="width: 30%"></div>
                     </div>
                 </div>
@@ -184,132 +109,138 @@
         </div>
         
         <div class="row">
-            <div class="col-md-8">
-                <div class="section-card">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Active Job Postings -->
+                <div class="section-card fade-in mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="mb-0 fw-bold">Active Job Postings</h4>
-                        <a href="#" class="text-decoration-none">View All</a>
+                        <a href="#" class="text-decoration-none text-primary">View All <i class="bi bi-arrow-right"></i></a>
                     </div>
                     
                     <div class="job-card">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h5 class="mb-1">Senior Software Engineer</h5>
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2 fw-bold">Senior Software Engineer</h5>
                                 <p class="text-muted mb-2">
                                     <i class="bi bi-geo-alt me-1"></i> San Francisco, CA 
                                     <span class="mx-2">•</span>
                                     <i class="bi bi-cash me-1"></i> $120k - $150k
                                 </p>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-primary">Full-time</span>
                                     <span class="badge bg-success">Active</span>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <p class="mb-1"><strong>12</strong> Applications</p>
-                                <p class="text-muted mb-0">Posted: 3 days ago</p>
+                            <div class="text-end mt-3 mt-md-0">
+                                <p class="mb-1 fw-bold">12</p>
+                                <p class="text-muted mb-0 small">Applications</p>
+                                <small class="text-muted">Posted: 3 days ago</small>
                             </div>
                         </div>
                     </div>
                     
                     <div class="job-card">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h5 class="mb-1">Frontend Developer</h5>
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2 fw-bold">Frontend Developer</h5>
                                 <p class="text-muted mb-2">
                                     <i class="bi bi-geo-alt me-1"></i> Remote
                                     <span class="mx-2">•</span>
                                     <i class="bi bi-cash me-1"></i> $90k - $110k
                                 </p>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-primary">Remote</span>
                                     <span class="badge bg-success">Active</span>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <p class="mb-1"><strong>8</strong> Applications</p>
-                                <p class="text-muted mb-0">Posted: 1 week ago</p>
+                            <div class="text-end mt-3 mt-md-0">
+                                <p class="mb-1 fw-bold">8</p>
+                                <p class="text-muted mb-0 small">Applications</p>
+                                <small class="text-muted">Posted: 1 week ago</small>
                             </div>
                         </div>
                     </div>
                     
                     <div class="job-card">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h5 class="mb-1">Data Scientist</h5>
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2 fw-bold">Data Scientist</h5>
                                 <p class="text-muted mb-2">
                                     <i class="bi bi-geo-alt me-1"></i> New York, NY
                                     <span class="mx-2">•</span>
                                     <i class="bi bi-cash me-1"></i> $110k - $140k
                                 </p>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-primary">Full-time</span>
                                     <span class="badge bg-success">Active</span>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <p class="mb-1"><strong>15</strong> Applications</p>
-                                <p class="text-muted mb-0">Posted: 2 days ago</p>
+                            <div class="text-end mt-3 mt-md-0">
+                                <p class="mb-1 fw-bold">15</p>
+                                <p class="text-muted mb-0 small">Applications</p>
+                                <small class="text-muted">Posted: 2 days ago</small>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="section-card">
+                <!-- Top Candidates -->
+                <div class="section-card fade-in">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="mb-0 fw-bold">Top Candidates</h4>
-                        <a href="#" class="text-decoration-none">View All</a>
+                        <a href="#" class="text-decoration-none text-primary">View All <i class="bi bi-arrow-right"></i></a>
                     </div>
                     
                     <div class="candidate-card">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="mb-1">John Smith</h6>
-                                <p class="text-muted mb-1">Software Engineer with 5 years of experience</p>
-                                <div class="d-flex gap-2">
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold">John Smith</h6>
+                                <p class="text-muted mb-2 small">Software Engineer with 5 years of experience</p>
+                                <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-info">Python</span>
                                     <span class="badge bg-info">JavaScript</span>
                                     <span class="badge bg-info">React</span>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <p class="mb-1 text-success fw-bold">92% Match</p>
+                            <div class="text-end mt-3 mt-md-0">
+                                <p class="mb-1 text-success fw-bold fs-5">92% Match</p>
                                 <small class="text-muted">Applied: 2 days ago</small>
                             </div>
                         </div>
                     </div>
                     
                     <div class="candidate-card">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="mb-1">Emily Johnson</h6>
-                                <p class="text-muted mb-1">Frontend Developer with 3 years of experience</p>
-                                <div class="d-flex gap-2">
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold">Emily Johnson</h6>
+                                <p class="text-muted mb-2 small">Frontend Developer with 3 years of experience</p>
+                                <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-info">React</span>
                                     <span class="badge bg-info">Vue.js</span>
                                     <span class="badge bg-info">CSS</span>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <p class="mb-1 text-success fw-bold">88% Match</p>
+                            <div class="text-end mt-3 mt-md-0">
+                                <p class="mb-1 text-success fw-bold fs-5">88% Match</p>
                                 <small class="text-muted">Applied: 3 days ago</small>
                             </div>
                         </div>
                     </div>
                     
                     <div class="candidate-card">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="mb-1">Michael Brown</h6>
-                                <p class="text-muted mb-1">Data Scientist with 4 years of experience</p>
-                                <div class="d-flex gap-2">
+                        <div class="d-flex justify-content-between flex-wrap">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold">Michael Brown</h6>
+                                <p class="text-muted mb-2 small">Data Scientist with 4 years of experience</p>
+                                <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-info">Python</span>
                                     <span class="badge bg-info">Machine Learning</span>
                                     <span class="badge bg-info">SQL</span>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <p class="mb-1 text-success fw-bold">85% Match</p>
+                            <div class="text-end mt-3 mt-md-0">
+                                <p class="mb-1 text-success fw-bold fs-5">85% Match</p>
                                 <small class="text-muted">Applied: 1 day ago</small>
                             </div>
                         </div>
@@ -317,8 +248,10 @@
                 </div>
             </div>
             
-            <div class="col-md-4">
-                <div class="section-card mb-4">
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Quick Actions -->
+                <div class="section-card fade-in mb-4">
                     <h4 class="mb-4 fw-bold">Quick Actions</h4>
                     <div class="d-grid gap-2">
                         <a href="/job-post" class="btn btn-primary">
@@ -340,37 +273,56 @@
                     </div>
                 </div>
                 
-                <div class="section-card mb-4">
+                <!-- Recent Activity -->
+                <div class="section-card fade-in mb-4">
                     <h4 class="mb-4 fw-bold">Recent Activity</h4>
                     <div class="list-group">
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">New Application</h6>
-                                <small>10 mins ago</small>
+                        <div class="list-group-item bg-transparent border-0 mb-2 p-3" style="background: var(--bg-tertiary) !important; border-radius: 12px !important;">
+                            <div class="d-flex w-100 justify-content-between mb-2">
+                                <h6 class="mb-0">New Application</h6>
+                                <small class="text-muted">10 mins ago</small>
                             </div>
-                            <p class="mb-1">Sarah Wilson applied for Senior Software Engineer</p>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Interview Scheduled</h6>
-                                <small>3 hours ago</small>
+                            <p class="mb-0 text-muted small">Sarah Wilson applied for Senior Software Engineer</p>
+                        </div>
+                        <div class="list-group-item bg-transparent border-0 mb-2 p-3" style="background: var(--bg-tertiary) !important; border-radius: 12px !important;">
+                            <div class="d-flex w-100 justify-content-between mb-2">
+                                <h6 class="mb-0">Interview Scheduled</h6>
+                                <small class="text-muted">3 hours ago</small>
                             </div>
-                            <p class="mb-1">Interview scheduled with John Smith</p>
-                        </a>
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Job Posted</h6>
-                                <small>1 day ago</small>
+                            <p class="mb-0 text-muted small">Interview scheduled with John Smith</p>
+                        </div>
+                        <div class="list-group-item bg-transparent border-0 p-3" style="background: var(--bg-tertiary) !important; border-radius: 12px !important;">
+                            <div class="d-flex w-100 justify-content-between mb-2">
+                                <h6 class="mb-0">Job Posted</h6>
+                                <small class="text-muted">1 day ago</small>
                             </div>
-                            <p class="mb-1">Data Scientist position posted</p>
-                        </a>
+                            <p class="mb-0 text-muted small">Data Scientist position posted</p>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="section-card">
+                <!-- Job Performance -->
+                <div class="section-card fade-in">
                     <h4 class="mb-4 fw-bold">Job Performance</h4>
                     <div class="text-center mb-3">
-                        <canvas id="jobPerformanceChart" width="100%" height="200"></canvas>
+                        <div class="d-flex justify-content-around align-items-end mb-3" style="height: 150px;">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="bg-primary rounded-top" style="width: 40px; height: 60px; background: var(--gradient-primary) !important;"></div>
+                                <small class="text-muted mt-2">Job A</small>
+                            </div>
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="bg-primary rounded-top" style="width: 40px; height: 40px; background: var(--gradient-primary) !important;"></div>
+                                <small class="text-muted mt-2">Job B</small>
+                            </div>
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="bg-primary rounded-top" style="width: 40px; height: 80px; background: var(--gradient-primary) !important;"></div>
+                                <small class="text-muted mt-2">Job C</small>
+                            </div>
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="bg-primary rounded-top" style="width: 40px; height: 35px; background: var(--gradient-primary) !important;"></div>
+                                <small class="text-muted mt-2">Job D</small>
+                            </div>
+                        </div>
                     </div>
                     <div class="d-flex justify-content-around">
                         <div class="text-center">
@@ -382,7 +334,7 @@
                             <small class="text-muted">Applies</small>
                         </div>
                         <div class="text-center">
-                            <p class="mb-1 fw-bold text-warning">3.5</p>
+                            <p class="mb-1 fw-bold text-warning">3.5%</p>
                             <small class="text-muted">CTR</small>
                         </div>
                     </div>
@@ -394,40 +346,27 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Chart.js for visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script>
-        // Initialize charts
-        document.addEventListener('DOMContentLoaded', function() {
-            // Job Performance Chart
-            const ctx = document.getElementById('jobPerformanceChart').getContext('2d');
-            const jobPerformanceChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Job A', 'Job B', 'Job C', 'Job D'],
-                    datasets: [{
-                        label: 'Applications',
-                        data: [12, 8, 15, 7],
-                        backgroundColor: 'rgba(67, 97, 238, 0.2)',
-                        borderColor: 'rgba(67, 97, 238, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
+        // Fade-in animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
                 }
             });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
         });
     </script>
 </body>
