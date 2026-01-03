@@ -14,6 +14,9 @@ import SkillGap from './pages/SkillGap';
 import JobPost from './pages/JobPost';
 import RecruiterDashboard from './pages/RecruiterDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ResumeResult from './pages/ResumeResult';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -54,6 +57,30 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SkillGap />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resume-result/:id"
+              element={
+                <ProtectedRoute>
+                  <ResumeResult />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />

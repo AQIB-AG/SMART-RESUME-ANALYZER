@@ -74,8 +74,13 @@ app.use((req, res) => {
   });
 });
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB only if MONGO_URI is provided
+if (process.env.MONGO_URI) {
+  connectDB();
+} else {
+  console.log('⚠️ MongoDB not connected (running in mock mode)');
+}
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
