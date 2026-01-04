@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { resumeAPI } from '../services/api';
-import { Upload as UploadIcon, FileText, CheckCircle, X } from 'lucide-react';
+import { Upload as UploadIcon, FileText, CheckCircle, X, Cloud, Zap, Target, TrendingUp, ArrowRight, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Upload = () => {
   const [file, setFile] = useState(null);
@@ -96,36 +97,57 @@ const Upload = () => {
 
   return (
     <Layout>
-      <div className="p-8">
+      <div className="p-6 md:p-8 bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-900 dark:to-charcoal-900 min-h-screen">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Your Resume</h1>
-            <p className="text-gray-600">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-8"
+          >
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 font-heading">
+              Upload Your Resume
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
               Submit your resume to get an in-depth analysis. We'll provide a score, skill matches, and personalized recommendations to help you land your dream job.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Your Resume File</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 mb-8 shadow-lg border border-white/20 dark:border-charcoal-700/50"
+          >
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 font-heading">Upload Your Resume File</h2>
             
             <div
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
                 dragActive
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-300 bg-gray-50'
+                  ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 dark:border-indigo-400 scale-105' 
+                  : 'border-gray-300 dark:border-charcoal-600 bg-white/30 dark:bg-charcoal-700/30'
               }`}
             >
               {!file ? (
-                <>
-                  <UploadIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-                  <p className="text-gray-700 font-medium mb-2">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-4"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className="inline-block p-6 bg-gradient-to-br from-indigo-100 to-cyan-100 dark:from-indigo-900/30 dark:to-cyan-900/30 rounded-2xl"
+                  >
+                    <Cloud className="w-16 h-16 text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
+                  </motion.div>
+                  <p className="text-gray-700 dark:text-gray-300 font-medium text-lg mb-2">
                     Drag & drop your resume here, or click to browse
                   </p>
-                  <p className="text-sm text-gray-500 mb-4">Max file size: 5MB</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Max file size: 5MB</p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -134,69 +156,163 @@ const Upload = () => {
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                  <label
+                  <motion.label
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     htmlFor="file-upload"
-                    className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer"
+                    className="inline-block px-8 py-4 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300"
                   >
                     Choose File
-                  </label>
-                  <p className="text-sm text-gray-500 mt-4">Supported formats: PDF, DOCX</p>
-                </>
+                  </motion.label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">Supported formats: PDF, DOC, DOCX</p>
+                </motion.div>
               ) : (
-                <div className="flex items-center justify-center gap-4">
-                  <FileText className="w-12 h-12 text-blue-600" />
-                  <div className="text-left">
-                    <p className="font-semibold text-gray-900">{file.name}</p>
-                    <p className="text-sm text-gray-500">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex items-center justify-center gap-6"
+                >
+                  <div className="p-4 bg-gradient-to-br from-indigo-100 to-cyan-100 dark:from-indigo-900/30 dark:to-cyan-900/30 rounded-2xl">
+                    <FileText className="w-12 h-12 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white truncate">{file.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {(file.size / 1024).toFixed(2)} KB
                     </p>
                   </div>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={removeFile}
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="p-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 transition-colors"
                   >
                     <X className="w-5 h-5" />
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
               )}
             </div>
 
             {error && (
-              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-xl text-red-600 dark:text-red-300 text-sm"
+              >
                 {error}
-              </div>
+              </motion.div>
             )}
 
             {success && (
-              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-600 text-sm flex items-center gap-2">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-xl text-green-600 dark:text-green-300 text-sm flex items-center gap-3"
+              >
                 <CheckCircle className="w-5 h-5" />
                 <span>Upload successful! Redirecting to analysis...</span>
-              </div>
+              </motion.div>
             )}
 
             {file && !success && (
-              <button
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleUpload}
                 disabled={uploading}
-                className="mt-6 w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-6 w-full py-4 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
               >
-                {uploading ? 'Uploading...' : 'Upload Resume'}
-              </button>
+                {uploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Analyzing Your Resume...
+                  </>
+                ) : (
+                  'Analyze My Resume'
+                )}
+              </motion.button>
             )}
-          </div>
+          </motion.div>
 
           {/* Preview Section */}
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Preview of an optimized resume:
-            </h2>
-            <div className="bg-gray-100 rounded-lg p-8 flex items-center justify-center min-h-[300px]">
-              <div className="text-center text-gray-400">
-                <FileText className="w-16 h-16 mx-auto mb-4" />
-                <p>Resume preview will appear here</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 dark:border-charcoal-700/50"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-lg">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white font-heading">
+                What Our AI Will Analyze
+              </h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">ATS Compatibility</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Check if your resume passes ATS filters</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Keyword Optimization</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Identify missing job-relevant keywords</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Score Breakdown</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Detailed score with improvement tips</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
+                    <Target className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Skill Gap Analysis</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Identify skills you need to develop</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                    <ArrowRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Actionable Recommendations</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Specific steps to improve your resume</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                    <FileText className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Format Optimization</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Suggestions for better layout and structure</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </Layout>
