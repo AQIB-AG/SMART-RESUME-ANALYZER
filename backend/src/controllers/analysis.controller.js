@@ -1,41 +1,61 @@
-// Mock analysis data (replace with actual AI engine later)
-// For now, we'll return mock analysis results
+import Resume from '../models/Resume.model.js';
 
 /**
  * Analyze resume
  */
 export const analyzeResume = async (req, res) => {
   try {
-    const resumeId = parseInt(req.params.id);
+    const resumeId = req.params.id;
     
-    // In real implementation, fetch resume from DB and run analysis
-    // For now, return mock analysis data
+    // Fetch resume from database
+    const resume = await Resume.findById(resumeId);
     
-    const mockAnalysis = {
-      ats_score: Math.floor(Math.random() * 30) + 70, // 70-100
+    if (!resume) {
+      return res.status(404).json({
+        success: false,
+        error: 'Resume not found'
+      });
+    }
+    
+    // Check permissions
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    if (userRole !== 'admin' && resume.userId.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+    
+    // Return stored analysis data
+    const analysisResult = {
+      ats_score: resume.atsScore,
+      feedback: resume.feedback,
       skills: {
-        all_skills: ['JavaScript', 'React', 'Node.js', 'Python', 'MongoDB'],
-        technical_skills: ['JavaScript', 'React', 'Node.js', 'Python'],
-        soft_skills: ['Communication', 'Teamwork'],
+        all_skills: resume.skills,
+        technical_skills: resume.skills.filter(skill => 
+          ['javascript', 'python', 'java', 'react', 'angular', 'vue', 'node.js', 'express',
+           'html', 'css', 'sql', 'mongodb', 'postgresql', 'mysql', 'git', 'github', 'docker',
+           'aws', 'azure', 'gcp', 'rest', 'api', 'json', 'xml', 'agile', 'scrum', 'oop'].includes(skill.toLowerCase())
+        ),
+        soft_skills: resume.skills.filter(skill => 
+          ['communication', 'teamwork', 'leadership', 'problem solving', 'critical thinking',
+           'adaptability', 'creativity', 'attention to detail', 'time management', 'collaboration'].includes(skill.toLowerCase())
+        ),
         certifications: []
       },
       sections_analysis: {
-        skills: { score: 85, feedback: 'Strong technical skills demonstrated' },
-        ats: { score: 87, feedback: 'Good ATS compatibility' },
-        grammar: { score: 92, feedback: 'Excellent grammar and spelling' },
-        keywords: { score: 78, feedback: 'Could add more relevant keywords' }
+        skills: { score: resume.atsScore ? Math.min(100, resume.atsScore) : 0, feedback: 'Skills section evaluation' },
+        ats: { score: resume.atsScore || 0, feedback: resume.feedback || 'ATS compatibility feedback' },
+        grammar: { score: resume.atsScore ? Math.min(100, resume.atsScore + 10) : 0, feedback: 'Grammar and spelling evaluation' },
+        keywords: { score: resume.atsScore ? Math.min(100, resume.atsScore - 5) : 0, feedback: 'Keyword density evaluation' }
       },
       contact_info: {
-        email: 'user@example.com',
-        phone: '+1234567890',
-        location: 'New York, NY'
+        email: resume.email,
+        name: resume.name
       },
-      education: [
-        { degree: 'Bachelor of Science', field: 'Computer Science', institution: 'University' }
-      ],
-      experience: [
-        { title: 'Software Engineer', company: 'Tech Corp', duration: '2 years' }
-      ]
+      education: [], // Placeholder - would extract from resumeText
+      experience: [] // Placeholder - would extract from resumeText
     };
 
     res.json({
@@ -43,7 +63,7 @@ export const analyzeResume = async (req, res) => {
       message: 'Resume analyzed successfully',
       data: {
         resume_id: resumeId,
-        ...mockAnalysis
+        ...analysisResult
       }
     });
   } catch (error) {

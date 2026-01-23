@@ -3,12 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import Resume from '../models/Resume.model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Mock resume data (replace with MongoDB later)
-const mockResumes = [];
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -55,34 +53,26 @@ export const uploadResume = async (req, res) => {
       });
     }
 
-    const resume = {
-      id: mockResumes.length + 1,
-      user_id: req.user.id,
-      filename: req.file.filename,
-      file_path: req.file.path,
-      original_filename: req.file.originalname,
-      file_size: req.file.size,
-      upload_date: new Date().toISOString(),
-      status: 'uploaded',
-      ats_score: null,
-      extracted_skills: null,
-      extracted_education: null,
-      extracted_experience: null,
-      extracted_contact: null,
-      raw_text: null,
-      keyword_density: null,
-      sections_analysis: null
-    };
+    const resume = new Resume({
+      name: req.user.first_name + ' ' + req.user.last_name,
+      email: req.user.email,
+      filePath: req.file.path,
+      fileName: req.file.filename,
+      originalFileName: req.file.originalname,
+      fileSize: req.file.size,
+      userId: req.user.id,
+      status: 'uploaded'
+    });
 
-    mockResumes.push(resume);
+    const savedResume = await resume.save();
 
     res.status(201).json({
       success: true,
       message: 'Resume uploaded successfully',
       data: {
-        resume_id: resume.id,
-        filename: resume.filename,
-        status: resume.status
+        resume_id: savedResume._id,
+        filename: savedResume.fileName,
+        status: savedResume.status
       }
     });
   } catch (error) {
@@ -102,25 +92,27 @@ export const getResumes = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.user.role;
 
-    let resumes;
-    if (userRole === 'admin') {
-      const filterUserId = req.query.user_id;
-      resumes = filterUserId 
-        ? mockResumes.filter(r => r.user_id === parseInt(filterUserId))
-        : mockResumes;
+    let query = {};
+    if (userRole !== 'admin') {
+      query.userId = userId;
     } else {
-      resumes = mockResumes.filter(r => r.user_id === userId);
+      // Admin can filter by user_id
+      if (req.query.user_id) {
+        query.userId = req.query.user_id;
+      }
     }
 
+    const resumes = await Resume.find(query).populate('userId', 'email first_name last_name');
+
     const resumeList = resumes.map(resume => ({
-      id: resume.id,
-      filename: resume.filename,
-      original_filename: resume.original_filename,
-      file_size: resume.file_size,
-      upload_date: resume.upload_date,
+      id: resume._id,
+      filename: resume.fileName,
+      original_filename: resume.originalFileName,
+      file_size: resume.fileSize,
+      upload_date: resume.createdAt,
       status: resume.status,
-      ats_score: resume.ats_score,
-      user_id: resume.user_id
+      ats_score: resume.atsScore,
+      user_id: resume.userId._id
     }));
 
     res.json({
@@ -143,8 +135,8 @@ export const getResumes = async (req, res) => {
  */
 export const getResume = async (req, res) => {
   try {
-    const resumeId = parseInt(req.params.id);
-    const resume = mockResumes.find(r => r.id === resumeId);
+    const resumeId = req.params.id;
+    const resume = await Resume.findById(resumeId).populate('userId', 'email first_name last_name');
 
     if (!resume) {
       return res.status(404).json({
@@ -156,7 +148,7 @@ export const getResume = async (req, res) => {
     // Check permissions
     const userId = req.user.id;
     const userRole = req.user.role;
-    if (userRole !== 'admin' && resume.user_id !== userId) {
+    if (userRole !== 'admin' && resume.userId._id.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         error: 'Access denied'
@@ -183,21 +175,20 @@ export const getResume = async (req, res) => {
  */
 export const updateResume = async (req, res) => {
   try {
-    const resumeId = parseInt(req.params.id);
-    const resumeIndex = mockResumes.findIndex(r => r.id === resumeId);
+    const resumeId = req.params.id;
+    const resume = await Resume.findById(resumeId);
 
-    if (resumeIndex === -1) {
+    if (!resume) {
       return res.status(404).json({
         success: false,
         error: 'Resume not found'
       });
     }
 
-    const resume = mockResumes[resumeIndex];
     const userId = req.user.id;
     const userRole = req.user.role;
 
-    if (userRole !== 'admin' && resume.user_id !== userId) {
+    if (userRole !== 'admin' && resume.userId.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         error: 'Access denied'
@@ -205,18 +196,22 @@ export const updateResume = async (req, res) => {
     }
 
     // Update allowed fields
-    const { status, ats_score, raw_text, extracted_skills, keyword_density } = req.body;
-    if (status) mockResumes[resumeIndex].status = status;
-    if (ats_score !== undefined) mockResumes[resumeIndex].ats_score = ats_score;
-    if (raw_text) mockResumes[resumeIndex].raw_text = raw_text;
-    if (extracted_skills) mockResumes[resumeIndex].extracted_skills = extracted_skills;
-    if (keyword_density) mockResumes[resumeIndex].keyword_density = keyword_density;
+    const { status, atsScore, resumeText, skills, feedback } = req.body;
+    
+    const updateData = {};
+    if (status !== undefined) updateData.status = status;
+    if (atsScore !== undefined) updateData.atsScore = atsScore;
+    if (resumeText !== undefined) updateData.resumeText = resumeText;
+    if (skills !== undefined) updateData.skills = skills;
+    if (feedback !== undefined) updateData.feedback = feedback;
+
+    const updatedResume = await Resume.findByIdAndUpdate(resumeId, updateData, { new: true });
 
     res.json({
       success: true,
       message: 'Resume updated successfully',
       data: {
-        resume_id: resumeId
+        resume_id: updatedResume._id
       }
     });
   } catch (error) {
@@ -233,21 +228,20 @@ export const updateResume = async (req, res) => {
  */
 export const deleteResume = async (req, res) => {
   try {
-    const resumeId = parseInt(req.params.id);
-    const resumeIndex = mockResumes.findIndex(r => r.id === resumeId);
+    const resumeId = req.params.id;
+    const resume = await Resume.findById(resumeId);
 
-    if (resumeIndex === -1) {
+    if (!resume) {
       return res.status(404).json({
         success: false,
         error: 'Resume not found'
       });
     }
 
-    const resume = mockResumes[resumeIndex];
     const userId = req.user.id;
     const userRole = req.user.role;
 
-    if (userRole !== 'admin' && resume.user_id !== userId) {
+    if (userRole !== 'admin' && resume.userId.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         error: 'Access denied'
@@ -255,11 +249,11 @@ export const deleteResume = async (req, res) => {
     }
 
     // Delete file from filesystem
-    if (fs.existsSync(resume.file_path)) {
-      fs.unlinkSync(resume.file_path);
+    if (fs.existsSync(resume.filePath)) {
+      await fs.promises.unlink(resume.filePath);
     }
 
-    mockResumes.splice(resumeIndex, 1);
+    await Resume.findByIdAndDelete(resumeId);
 
     res.json({
       success: true,

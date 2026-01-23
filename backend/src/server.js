@@ -14,6 +14,9 @@ import userRoutes from './routes/user.routes.js';
 import resumeRoutes from './routes/resume.routes.js';
 import jobRoutes from './routes/job.routes.js';
 import analysisRoutes from './routes/analysis.routes.js';
+import atsRoutes from './routes/ats.routes.js';
+import directAnalysisRoutes from './routes/direct-analysis.routes.js';
+import simpleAnalysisRoutes from './routes/simple-analysis.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -40,12 +43,17 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '..', process.env.UPLOAD_FOLDER || 'uploads')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/analysis', analysisRoutes);
+app.use('/api/ats', atsRoutes);
+app.use('/api', simpleAnalysisRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
