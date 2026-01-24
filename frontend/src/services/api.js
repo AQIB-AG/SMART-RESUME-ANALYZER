@@ -70,6 +70,15 @@ export const analysisAPI = {
   matchJobs: (resumeId) => api.get(`/analysis/match/${resumeId}`),
   skillGap: (resumeId, jobId) => api.get(`/analysis/skill-gap/${resumeId}/${jobId}`),
   getSummary: (resumeId) => api.get(`/analysis/summary/${resumeId}`),
+  analyzeResume: (formData) => {
+    const token = localStorage.getItem('token');
+    return axios.post(`${API_BASE_URL}/analyzeResume`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
 };
 
 // Job API

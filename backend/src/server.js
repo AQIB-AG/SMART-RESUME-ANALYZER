@@ -16,7 +16,6 @@ import jobRoutes from './routes/job.routes.js';
 import analysisRoutes from './routes/analysis.routes.js';
 import atsRoutes from './routes/ats.routes.js';
 import directAnalysisRoutes from './routes/direct-analysis.routes.js';
-import simpleAnalysisRoutes from './routes/simple-analysis.routes.js';
 
 // Load environment variables
 dotenv.config();
@@ -53,7 +52,7 @@ app.use('/api/resumes', resumeRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/ats', atsRoutes);
-app.use('/api', simpleAnalysisRoutes);
+app.use('/api', directAnalysisRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

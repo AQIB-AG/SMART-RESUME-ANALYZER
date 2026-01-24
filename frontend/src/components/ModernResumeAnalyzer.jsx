@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Zap, Target, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { analysisAPI } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const ModernResumeAnalyzer = () => {
   const [file, setFile] = useState(null);
@@ -8,6 +11,9 @@ const ModernResumeAnalyzer = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   // Allowed file types
   const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -104,6 +110,14 @@ const ModernResumeAnalyzer = () => {
 
   // Upload and analyze resume
   const analyzeResume = async () => {
+    if (!isAuthenticated) {
+      setError('Please log in to analyze your resume');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
+      return;
+    }
+    
     if (!file) {
       setError('Please select a file first');
       return;
@@ -121,24 +135,16 @@ const ModernResumeAnalyzer = () => {
       const formData = new FormData();
       formData.append('resume', file);
 
-      const response = await fetch('http://localhost:5000/api/analyzeResume', {
-        method: 'POST',
-        body: formData,
-      });
+      // Use the API service
+      const response = await analysisAPI.analyzeResume(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to analyze resume');
-      }
-
-      if (!data.success) {
-        throw new Error(data.error || 'Analysis failed');
+      if (!response.success) {
+        throw new Error(response.error || 'Analysis failed');
       }
 
       setResult({
-        score: data.score,
-        feedback: data.feedback
+        score: response.score,
+        feedback: response.feedback
       });
     } catch (err) {
       console.error('Analysis error:', err);
@@ -179,7 +185,9 @@ const ModernResumeAnalyzer = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
           className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
-            isDragging
+            isUploading
+              ? 'border-cyan-400 bg-cyan-50/30 dark:bg-cyan-900/20 shadow-[0_0_20px_rgba(34,211,238,0.5)] animate-pulse'
+              : isDragging
               ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 scale-[1.02]'
               : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
           }`}
@@ -264,7 +272,9 @@ const ModernResumeAnalyzer = () => {
             onClick={analyzeResume}
             disabled={isUploading || !file}
             className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center ${
-              isUploading || !file
+              isUploading
+                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-[0_0_20px_rgba(34,211,238,0.5)] animate-pulse'
+                : isUploading || !file
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-indigo-600 to-cyan-500 hover:shadow-lg'
             }`}

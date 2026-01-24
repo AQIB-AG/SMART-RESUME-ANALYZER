@@ -7,7 +7,7 @@ import { generateToken } from '../utils/jwt.utils.js';
  */
 export const register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, first_name, last_name } = req.body;
 
     // Validate required fields
     if (!email || !password) {
@@ -47,6 +47,8 @@ export const register = async (req, res) => {
     const newUser = await User.create({
       email: email.toLowerCase(),
       password, // Will be hashed automatically
+      first_name: first_name || '',
+      last_name: last_name || '',
       role: 'candidate' // Default role
     });
 
@@ -213,44 +215,62 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userIndex = mockUsers.findIndex(u => u.id === userId);
+    const { first_name, last_name, email } = req.body;
 
-    if (userIndex === -1) {
+    // Find user by ID
+    const user = await User.findById(userId);
+    if (!user) {
       return res.status(404).json({
         success: false,
         error: 'User not found'
       });
     }
 
-    const { first_name, last_name, email } = req.body;
-    const user = mockUsers[userIndex];
-
-    // Update fields
-    if (first_name) user.first_name = first_name;
-    if (last_name) user.last_name = last_name;
-    if (email) {
-      // Check if email is already taken
-      const emailExists = mockUsers.find(u => u.email === email && u.id !== userId);
-      if (emailExists) {
+    // If email is being updated, check if it already exists
+    if (email && email.toLowerCase() !== user.email) {
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
         return res.status(409).json({
           success: false,
           error: 'Email already in use'
         });
       }
-      user.email = email;
+      user.email = email.toLowerCase();
     }
 
-    const { passwordHash: _, ...userResponse } = user;
+    // Update other fields
+    if (first_name) user.first_name = first_name;
+    if (last_name) user.last_name = last_name;
+
+    // Save updated user
+    await user.save();
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
       data: {
-        user: userResponse
+        user: {
+          id: user._id,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          role: user.role,
+          createdAt: user.createdAt
+        }
       }
     });
   } catch (error) {
     console.error('Update profile error:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        error: errors[0] || 'Validation error'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: 'Failed to update profile'

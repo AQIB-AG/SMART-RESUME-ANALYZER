@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import { User, Mail, Lock, GraduationCap, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Register = () => {
-  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -17,6 +16,8 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -38,30 +39,22 @@ const Register = () => {
       const first_name = nameParts[0] || '';
       const last_name = nameParts.slice(1).join(' ') || '';
 
-      const requestData = {
+      const userData = {
         email: formData.email,
         password: formData.password,
         first_name,
         last_name,
       };
 
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSuccess(data.message || 'Registration successful!');
+      const result = await register(userData);
+      
+      if (result.success) {
+        setSuccess('Registration successful! Redirecting to login...');
         setTimeout(() => {
           navigate('/login');
         }, 1500);
       } else {
-        setError(data.error || 'Registration failed. Please try again.');
+        setError(result.error || 'Registration failed. Please try again.');
       }
     } catch (err) {
       setError(err.message || 'Failed to connect to server. Please check if the backend is running.');
