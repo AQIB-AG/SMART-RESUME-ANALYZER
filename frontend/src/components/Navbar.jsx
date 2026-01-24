@@ -11,10 +11,26 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { name: 'Features', path: '/#features' },
-    { name: 'How It Works', path: '/#how-it-works' },
-    { name: 'Pricing', path: '/#pricing' },
+    { name: 'Features', path: '/', hash: '#features' },
+    { name: 'How It Works', path: '/', hash: '#how-it-works' },
+    { name: 'Pricing', path: '/', hash: '#pricing' },
   ];
+
+  const handleHashNavigation = (e, item) => {
+    e.preventDefault();
+    if (item.hash) {
+      // If we're already on the landing page, just scroll
+      if (window.location.pathname === '/') {
+        const element = document.getElementById(item.hash.substring(1));
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // Navigate to landing page with hash, then scroll
+        window.location.href = `/${item.hash}`;
+      }
+    }
+  };
 
   const authNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: BarChart3 },
@@ -45,13 +61,14 @@ const Navbar = () => {
             {!isAuthenticated ? (
               <>
                 {navItems.map((item) => (
-                  <Link
+                  <a
                     key={item.name}
-                    to={item.path}
-                    className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium"
+                    href={item.hash || item.path}
+                    onClick={(e) => handleHashNavigation(e, item)}
+                    className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium cursor-pointer"
                   >
                     {item.name}
-                  </Link>
+                  </a>
                 ))}
               </>
             ) : (
@@ -161,14 +178,17 @@ const Navbar = () => {
               {!isAuthenticated ? (
                 <>
                   {navItems.map((item) => (
-                    <Link
+                    <a
                       key={item.name}
-                      to={item.path}
-                      className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium py-2 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700"
-                      onClick={() => setIsMenuOpen(false)}
+                      href={item.hash || item.path}
+                      onClick={(e) => {
+                        handleHashNavigation(e, item);
+                        setIsMenuOpen(false);
+                      }}
+                      className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium py-2 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 cursor-pointer"
                     >
                       {item.name}
-                    </Link>
+                    </a>
                   ))}
                   <div className="flex flex-col space-y-3 pt-2">
                     <Link

@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ModernResumeAnalyzer from '../components/ModernResumeAnalyzer';
@@ -6,6 +7,20 @@ import { Sparkles, Search, Target, Palette, ArrowRight, Check, Star, Zap, Trendi
 import { motion } from 'framer-motion';
 
 const Landing = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Handle hash navigation for smooth scrolling
+    if (location.hash) {
+      const element = document.getElementById(location.hash.substring(1));
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-900 dark:to-charcoal-900">
       <Navbar />
@@ -200,21 +215,24 @@ const Landing = () => {
                 title: 'Upload Your Resume',
                 desc: 'Easily upload your resume in PDF, DOCX, or plain text format. Our secure system ensures your data is protected and ready for analysis in moments.',
                 color: 'indigo',
-                reverse: false
+                reverse: false,
+                image: 'https://media.istockphoto.com/id/1402436756/photo/uploading-documents-from-folder-open-file-folder-with-flying-blank-documents-with-laptop.webp'
               },
               {
                 step: 2,
                 title: 'AI Analysis',
                 desc: 'Our advanced AI analyzes your resume for ATS compatibility, keyword optimization, skill gaps, and provides personalized recommendations.',
                 color: 'cyan',
-                reverse: true
+                reverse: true,
+                image: 'https://plus.unsplash.com/premium_photo-1681426690743-1a2f26db94fa'
               },
               {
                 step: 3,
                 title: 'Get Results & Improve',
                 desc: 'Receive detailed insights, skill gap analysis, and actionable recommendations to enhance your resume and increase your chances of landing interviews.',
                 color: 'electric-blue',
-                reverse: false
+                reverse: false,
+                image: 'https://plus.unsplash.com/premium_vector-1761955857847-932ea41dc1da'
               }
             ].map((item, idx) => (
               <motion.div
@@ -226,15 +244,24 @@ const Landing = () => {
                 className={`flex flex-col md:flex-row items-center gap-12 ${item.reverse ? 'md:flex-row-reverse' : ''}`}
               >
                 <div className="flex-shrink-0 w-full md:w-1/2">
-                  <div className="relative">
-                    <div className="w-full h-80 bg-gradient-to-br from-indigo-100 to-cyan-100 dark:from-charcoal-800 dark:to-indigo-900/30 rounded-3xl flex items-center justify-center p-8 border border-gray-200 dark:border-charcoal-700">
-                      <div className="text-center">
-                        <div className="text-6xl font-bold text-indigo-600 dark:text-indigo-400 mb-4">{item.step}</div>
-                        <div className="text-gray-400 dark:text-gray-500">Step {item.step} Visual</div>
-                      </div>
+                  <motion.div
+                    initial={{ opacity: 0, x: item.reverse ? -50 : 50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="relative"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-2xl transform rotate-3 blur-lg opacity-30"></div>
+                    <div className="relative rounded-2xl overflow-hidden shadow-2xl glass border border-white/20">
+                        {/* Image Rendering */}
+                        <img 
+                            src={item.image} 
+                            alt={item.title} 
+                            className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-700"
+                            loading="lazy"
+                        />
                     </div>
-                    <div className="absolute -inset-4 bg-gradient-to-r from-indigo-200 to-cyan-200 dark:from-indigo-500/20 dark:to-cyan-500/20 rounded-3xl blur opacity-30 -z-10"></div>
-                  </div>
+                  </motion.div>
                 </div>
                 
                 <div className="w-full md:w-1/2">

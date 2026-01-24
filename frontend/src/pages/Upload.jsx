@@ -227,8 +227,10 @@ const Upload = () => {
               >
                 {uploading ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Analyzing Your Resume...
+                    <NeonLoader />
+                    <span className="text-white font-medium animate-pulse tracking-wide drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]">
+                      Analyzing Your Resume...
+                    </span>
                   </>
                 ) : (
                   'Analyze My Resume'

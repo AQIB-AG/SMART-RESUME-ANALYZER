@@ -37,18 +37,24 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authAPI.login(email, password);
-      if (response.success) {
+      if (response && response.success) {
         const { user: userData, token } = response.data;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
         setIsAuthenticated(true);
         return { success: true };
+      } else {
+        return {
+          success: false,
+          error: response?.error || 'Login failed',
+        };
       }
     } catch (error) {
+      console.error('Login error:', error);
       return {
         success: false,
-        error: error.error || 'Login failed',
+        error: error?.error || error?.message || 'Login failed',
       };
     }
   };
@@ -56,18 +62,24 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authAPI.register(userData);
-      if (response.success) {
+      if (response && response.success) {
         const { user: newUser, token } = response.data;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(newUser));
         setUser(newUser);
         setIsAuthenticated(true);
         return { success: true };
+      } else {
+        return {
+          success: false,
+          error: response?.error || 'Registration failed',
+        };
       }
     } catch (error) {
+      console.error('Registration error:', error);
       return {
         success: false,
-        error: error.error || 'Registration failed',
+        error: error?.error || error?.message || 'Registration failed',
       };
     }
   };

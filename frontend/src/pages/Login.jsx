@@ -19,15 +19,22 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(email, password);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error || 'Login failed');
+    try {
+      const result = await login(email, password);
+      
+      if (result && result.success) {
+        // Force navigation to dashboard on successful login
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 100);
+      } else {
+        setError(result?.error || 'Login failed');
+        setLoading(false);
+      }
+    } catch (err) {
+      setError(err?.message || 'Login failed');
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (

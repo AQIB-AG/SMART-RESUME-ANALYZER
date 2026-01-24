@@ -43,6 +43,16 @@ export const register = async (req, res) => {
       });
     }
 
+    // Generate JWT token first (before creating user to avoid orphaned records)
+    // Check if JWT_SECRET exists
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET is not configured');
+      return res.status(500).json({
+        success: false,
+        error: 'Server configuration error. Please contact support.'
+      });
+    }
+
     // Create new user (password will be hashed by pre-save hook)
     const newUser = await User.create({
       email: email.toLowerCase(),
@@ -52,16 +62,28 @@ export const register = async (req, res) => {
       role: 'candidate' // Default role
     });
 
-    // Generate JWT token
-    const token = generateToken({
-      id: newUser._id,
-      email: newUser.email,
-      role: newUser.role
-    });
+    // Generate JWT token after user creation
+    let token;
+    try {
+      token = generateToken({
+        id: newUser._id,
+        email: newUser.email,
+        role: newUser.role
+      });
+    } catch (tokenError) {
+      // If token generation fails, delete the user to avoid orphaned records
+      await User.findByIdAndDelete(newUser._id);
+      console.error('❌ Token generation failed:', tokenError);
+      return res.status(500).json({
+        success: false,
+        error: 'Registration failed. Please try again.'
+      });
+    }
 
     console.log('✅ User registered successfully:', newUser.email);
 
-    res.status(201).json({
+    // Ensure response is sent with proper status
+    return res.status(201).json({
       success: true,
       message: 'User registered successfully',
       data: {
