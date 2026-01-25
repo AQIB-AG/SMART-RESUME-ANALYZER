@@ -1,16 +1,91 @@
-import * as pdfParseLib from 'pdf-parse';
-import path from 'path';
+// Import pdf-parse - it's a CommonJS module, use createRequire for ES modules
+import { createRequire } from 'module';
+import fs from 'fs/promises';
+
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 
 /**
  * Extract text from PDF file
+ * @param {Object} file - Multer file object with either .path (diskStorage) or .buffer (memoryStorage)
+ * @returns {Promise<string>} Extracted text from PDF
  */
-const extractTextFromPdf = async (filePath) => {
+const extractTextFromPdf = async (file) => {
   try {
-    const dataBuffer = await import('fs').then(fs => fs.promises.readFile(filePath));
-    const data = await pdfParseLib.default(dataBuffer);
-    return data.text;
+    // Validate file object
+    if (!file) {
+      throw new Error('No file provided for PDF extraction');
+    }
+
+    let dataBuffer;
+
+    // Handle both diskStorage (file.path) and memoryStorage (file.buffer)
+    if (file.buffer && Buffer.isBuffer(file.buffer)) {
+      // Memory storage - use buffer directly
+      dataBuffer = file.buffer;
+    } else if (file.path && typeof file.path === 'string') {
+      // Disk storage - read file from path
+      try {
+        dataBuffer = await fs.readFile(file.path);
+      } catch (readError) {
+        throw new Error(`Failed to read file from path: ${readError.message}`);
+      }
+    } else {
+      throw new Error('File object must have either .buffer (memoryStorage) or .path (diskStorage) property');
+    }
+
+    // Validate that we have a buffer
+    if (!Buffer.isBuffer(dataBuffer)) {
+      throw new Error('Failed to obtain file buffer for PDF parsing');
+    }
+
+    // Validate buffer is not empty
+    if (dataBuffer.length === 0) {
+      throw new Error('File buffer is empty');
+    }
+
+    // Parse PDF using pdf-parse
+    const data = await pdfParse(dataBuffer);
+
+    // Validate parsing result
+    if (!data) {
+      throw new Error('PDF parsing returned no data');
+    }
+
+    if (!data.text || typeof data.text !== 'string') {
+      throw new Error('PDF parsing returned no extractable text');
+    }
+
+    // Check if text is empty or just whitespace
+    const extractedText = data.text.trim();
+    if (extractedText.length === 0) {
+      throw new Error('PDF contains no extractable text (may be image-based or corrupted)');
+    }
+
+    return extractedText;
   } catch (error) {
-    throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    // Provide user-friendly error messages
+    const errorMessage = error.message || 'Unknown error';
+    
+    if (errorMessage.includes('Invalid PDF') || errorMessage.includes('corrupted') || errorMessage.includes('not a valid PDF')) {
+      throw new Error('The uploaded file is not a valid PDF or appears to be corrupted. Please upload a valid PDF file.');
+    }
+    
+    if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
+      throw new Error('The PDF is password-protected and cannot be analyzed. Please remove the password and try again.');
+    }
+    
+    if (errorMessage.includes('no extractable text')) {
+      throw new Error('The PDF contains no extractable text. It may be image-based. Please use a text-based PDF.');
+    }
+    
+    // Re-throw with context if it's already a formatted error
+    if (errorMessage.includes('The uploaded file') || errorMessage.includes('The PDF is')) {
+      throw error;
+    }
+    
+    // Generic error with original message
+    throw new Error(`Failed to extract text from PDF: ${errorMessage}`);
   }
 };
 

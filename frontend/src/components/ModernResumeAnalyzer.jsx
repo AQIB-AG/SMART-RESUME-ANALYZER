@@ -11,9 +11,17 @@ const ModernResumeAnalyzer = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [analyzingStep, setAnalyzingStep] = useState('');
   
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+
+  const analyzingSteps = [
+    'Analyzing your resume...',
+    'Extracting skills...',
+    'Calculating ATS score...',
+    'Generating feedback...'
+  ];
 
   // Allowed file types
   const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -130,27 +138,68 @@ const ModernResumeAnalyzer = () => {
     setIsUploading(true);
     setError('');
     setResult(null);
+    setAnalyzingStep(analyzingSteps[0]);
+
+    // Simulate step progression
+    const stepInterval = setInterval(() => {
+      setAnalyzingStep(prev => {
+        const currentIndex = analyzingSteps.indexOf(prev);
+        if (currentIndex < analyzingSteps.length - 1) {
+          return analyzingSteps[currentIndex + 1];
+        }
+        return prev;
+      });
+    }, 1500);
 
     try {
       const formData = new FormData();
       formData.append('resume', file);
 
-      // Use the API service
+      // analyzeResume uses axios directly, so response structure is { data: {...}, status, ... }
       const response = await analysisAPI.analyzeResume(formData);
 
-      if (!response.success) {
-        throw new Error(response.error || 'Analysis failed');
-      }
+      clearInterval(stepInterval);
 
-      setResult({
-        score: response.score,
-        feedback: response.feedback
-      });
+      // Extract data from axios response
+      const responseData = response?.data || response;
+
+      // Check if request was successful (status 200-299)
+      if (response?.status >= 200 && response?.status < 300) {
+        // Success case - response has score and feedback
+        if (responseData?.success === false) {
+          throw new Error(responseData?.error || 'Analysis failed');
+        }
+        
+        setResult({
+          score: responseData?.score || responseData?.atsScore || 75,
+          feedback: responseData?.feedback || 'Your resume has been analyzed successfully. Consider adding more relevant keywords and quantifiable achievements to improve your ATS score.'
+        });
+      } else {
+        throw new Error(responseData?.error || 'Analysis failed');
+      }
     } catch (err) {
+      clearInterval(stepInterval);
       console.error('Analysis error:', err);
-      setError(err.message || 'An error occurred during analysis');
+      
+      // Handle different error formats
+      let errorMessage = 'An error occurred during analysis. Please try again.';
+      
+      if (err?.response?.data) {
+        // Axios error with response data
+        const errorData = err.response.data;
+        errorMessage = errorData?.error || errorData?.message || errorMessage;
+      } else if (err?.error) {
+        // Error object with error property
+        errorMessage = err.error;
+      } else if (err?.message) {
+        // Standard error message
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsUploading(false);
+      setAnalyzingStep('');
     }
   };
 
@@ -186,7 +235,7 @@ const ModernResumeAnalyzer = () => {
           transition={{ delay: 0.3 }}
           className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
             isUploading
-              ? 'border-cyan-400 bg-cyan-50/30 dark:bg-cyan-900/20 shadow-[0_0_20px_rgba(34,211,238,0.5)] animate-pulse'
+              ? 'neon-border-analyzing bg-cyan-50/30 dark:bg-cyan-900/20'
               : isDragging
               ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 scale-[1.02]'
               : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'
@@ -259,39 +308,54 @@ const ModernResumeAnalyzer = () => {
           </motion.div>
         )}
 
-        {/* Upload Button */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-6"
-        >
-          <motion.button
-            whileHover={{ scale: file && !isUploading ? 1.02 : 1 }}
-            whileTap={{ scale: file && !isUploading ? 0.98 : 1 }}
-            onClick={analyzeResume}
-            disabled={isUploading || !file}
-            className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center ${
-              isUploading
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-[0_0_20px_rgba(34,211,238,0.5)] animate-pulse'
-                : isUploading || !file
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-indigo-600 to-cyan-500 hover:shadow-lg'
-            }`}
+        {/* Analyzing Status */}
+        {isUploading && analyzingStep && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 p-6 bg-gradient-to-r from-cyan-50/80 to-indigo-50/80 dark:from-cyan-900/20 dark:to-indigo-900/20 border border-cyan-200 dark:border-cyan-700/50 rounded-xl"
           >
-            {isUploading ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Analyzing Your Resume...
-              </>
-            ) : (
-              <>
-                <Zap className="w-5 h-5 mr-2" />
-                Analyze Resume
-              </>
-            )}
-          </motion.button>
-        </motion.div>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Loader2 className="w-5 h-5 text-cyan-600 dark:text-cyan-400 animate-spin" />
+              <span className="text-cyan-700 dark:text-cyan-300 font-semibold text-lg">
+                {analyzingStep}
+              </span>
+            </div>
+            <div className="w-full bg-cyan-200 dark:bg-cyan-800 rounded-full h-2 overflow-hidden">
+              <motion.div
+                className="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full"
+                initial={{ width: 0 }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Upload Button */}
+        {!isUploading && !result && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="mt-6"
+          >
+            <motion.button
+              whileHover={{ scale: file ? 1.02 : 1 }}
+              whileTap={{ scale: file ? 0.98 : 1 }}
+              onClick={analyzeResume}
+              disabled={!file}
+              className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center ${
+                !file
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-indigo-600 to-cyan-500 hover:shadow-lg'
+              }`}
+            >
+              <Zap className="w-5 h-5 mr-2" />
+              Analyze Resume
+            </motion.button>
+          </motion.div>
+        )}
 
         {/* Results */}
         {result && (

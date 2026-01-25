@@ -1,18 +1,26 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { resumeAPI } from '../services/api';
-import { Upload as UploadIcon, FileText, CheckCircle, X, Cloud, Zap, Target, TrendingUp, ArrowRight, Check } from 'lucide-react';
+import { analysisAPI } from '../services/api';
+import { Upload as UploadIcon, FileText, CheckCircle, X, Cloud, Zap, Target, TrendingUp, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Upload = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [result, setResult] = useState(null);
+  const [analyzingStep, setAnalyzingStep] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  const analyzingSteps = [
+    'Analyzing your resume...',
+    'Extracting skills...',
+    'Calculating ATS score...',
+    'Generating feedback...'
+  ];
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -66,33 +74,98 @@ const Upload = () => {
 
     setUploading(true);
     setError('');
-    setSuccess(false);
+    setResult(null);
+    setAnalyzingStep(analyzingSteps[0]);
+
+    // Simulate step progression
+    const stepInterval = setInterval(() => {
+      setAnalyzingStep(prev => {
+        const currentIndex = analyzingSteps.indexOf(prev);
+        if (currentIndex < analyzingSteps.length - 1) {
+          return analyzingSteps[currentIndex + 1];
+        }
+        return prev;
+      });
+    }, 1500);
 
     try {
       const formData = new FormData();
       formData.append('resume', file);
 
-      const response = await resumeAPI.upload(formData);
+      // analyzeResume uses axios directly, so response structure is { data: {...}, status, ... }
+      const response = await analysisAPI.analyzeResume(formData);
       
-      if (response.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          navigate(`/resume-result/${response.data.resume_id}`);
-        }, 2000);
+      clearInterval(stepInterval);
+      
+      // Extract data from axios response
+      const responseData = response?.data || response;
+      
+      // Check if request was successful (status 200-299)
+      if (response?.status >= 200 && response?.status < 300) {
+        // Success case - response has score and feedback
+        if (responseData?.success === false) {
+          throw new Error(responseData?.error || 'Analysis failed');
+        }
+        
+        setResult({
+          score: responseData?.score || responseData?.atsScore || 75,
+          feedback: responseData?.feedback || 'Your resume has been analyzed successfully. Consider adding more relevant keywords and quantifiable achievements to improve your ATS score.'
+        });
+      } else {
+        throw new Error(responseData?.error || 'Analysis failed');
       }
     } catch (error) {
-      setError(error.error || 'Upload failed. Please try again.');
+      clearInterval(stepInterval);
+      console.error('Upload error details:', error);
+      
+      // Handle different error formats
+      let errorMessage = 'Analysis failed. Please try again.';
+      
+      if (error?.response?.data) {
+        // Axios error with response data
+        const errorData = error.response.data;
+        errorMessage = errorData?.error || errorData?.message || errorMessage;
+      } else if (error?.error) {
+        // Error object with error property
+        errorMessage = error.error;
+      } else if (error?.message) {
+        // Standard error message
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setUploading(false);
+      setAnalyzingStep('');
     }
   };
 
   const removeFile = () => {
     setFile(null);
     setError('');
+    setResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const getScoreColor = (score) => {
+    if (score >= 80) return 'from-green-500 to-emerald-500';
+    if (score >= 60) return 'from-yellow-500 to-orange-500';
+    return 'from-red-500 to-pink-500';
+  };
+
+  const getScoreTextColor = (score) => {
+    if (score >= 80) return 'text-green-600 dark:text-green-400';
+    if (score >= 60) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-red-600 dark:text-red-400';
+  };
+
+  const getScoreText = (score) => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Average';
+    return 'Needs Improvement';
   };
 
   return (
@@ -127,7 +200,9 @@ const Upload = () => {
               onDragOver={handleDrag}
               onDrop={handleDrop}
               className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
-                dragActive
+                uploading
+                  ? 'neon-border-analyzing bg-cyan-50/30 dark:bg-cyan-900/20'
+                  : dragActive
                   ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 dark:border-indigo-400 scale-105' 
                   : 'border-gray-300 dark:border-charcoal-600 bg-white/30 dark:bg-charcoal-700/30'
               }`}
@@ -203,18 +278,31 @@ const Upload = () => {
               </motion.div>
             )}
 
-            {success && (
+            {/* Analyzing Status */}
+            {uploading && analyzingStep && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-xl text-green-600 dark:text-green-300 text-sm flex items-center gap-3"
+                className="mt-4 p-6 bg-gradient-to-r from-cyan-50/80 to-indigo-50/80 dark:from-cyan-900/20 dark:to-indigo-900/20 border border-cyan-200 dark:border-cyan-700/50 rounded-xl"
               >
-                <CheckCircle className="w-5 h-5" />
-                <span>Upload successful! Redirecting to analysis...</span>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <Loader2 className="w-5 h-5 text-cyan-600 dark:text-cyan-400 animate-spin" />
+                  <span className="text-cyan-700 dark:text-cyan-300 font-semibold text-lg">
+                    {analyzingStep}
+                  </span>
+                </div>
+                <div className="w-full bg-cyan-200 dark:bg-cyan-800 rounded-full h-2 overflow-hidden">
+                  <motion.div
+                    className="bg-gradient-to-r from-cyan-500 to-indigo-500 h-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  />
+                </div>
               </motion.div>
             )}
 
-            {file && !success && (
+            {file && !uploading && !result && (
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -225,17 +313,112 @@ const Upload = () => {
                 disabled={uploading}
                 className="mt-6 w-full py-4 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
               >
-                {uploading ? (
-                  <>
-                    <NeonLoader />
-                    <span className="text-white font-medium animate-pulse tracking-wide drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]">
-                      Analyzing Your Resume...
-                    </span>
-                  </>
-                ) : (
-                  'Analyze My Resume'
-                )}
+                <Zap className="w-5 h-5" />
+                Analyze My Resume
               </motion.button>
+            )}
+
+            {/* Results Display */}
+            {result && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="mt-8 space-y-6"
+              >
+                {/* Score Display */}
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="relative inline-block"
+                  >
+                    <svg className="w-64 h-64 transform -rotate-90" viewBox="0 0 100 100">
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        className="text-gray-200 dark:text-gray-700"
+                      />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="45"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        strokeDasharray={`${2 * Math.PI * 45}`}
+                        strokeDashoffset={`${2 * Math.PI * 45 * (1 - result.score / 100)}`}
+                        strokeLinecap="round"
+                        className={`text-gradient-to-r ${getScoreColor(result.score)}`}
+                        style={{
+                          stroke: result.score >= 80 ? '#22c55e' : result.score >= 60 ? '#eab308' : '#ef4444'
+                        }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div>
+                        <div className={`text-4xl font-bold font-mono ${getScoreTextColor(result.score)}`}>
+                          {result.score}%
+                        </div>
+                        <div className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+                          {getScoreText(result.score)}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Feedback */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="glass bg-white/50 dark:bg-charcoal-700/50 backdrop-blur-sm rounded-2xl p-6 border border-white/30 dark:border-charcoal-600/50"
+                >
+                  <div className="flex items-start gap-3">
+                    <Target className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                        Analysis Feedback
+                      </h3>
+                      <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+                        {result.feedback}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setFile(null);
+                      setResult(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    className="flex-1 py-3 bg-gray-200 dark:bg-charcoal-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-charcoal-600 transition-colors"
+                  >
+                    Analyze Another Resume
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate('/dashboard')}
+                    className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+                  >
+                    View Dashboard
+                  </motion.button>
+                </div>
+              </motion.div>
             )}
           </motion.div>
 

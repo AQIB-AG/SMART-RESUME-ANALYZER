@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import ModernResumeAnalyzer from '../components/ModernResumeAnalyzer';
 import { Sparkles, Search, Target, Palette, ArrowRight, Check, Star, Zap, TrendingUp, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -63,7 +62,7 @@ const Landing = () => {
                     to="/register"
                     className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-electric-blue-500 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform transition-all duration-300 flex items-center gap-2 group"
                   >
-                    Analyze My Resume
+                    Get Started Free
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </motion.div>
@@ -72,13 +71,20 @@ const Landing = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Link
-                    to="#how-it-works"
+                  <a
+                    href="#how-it-works"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const element = document.getElementById('how-it-works');
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
                     className="px-8 py-4 bg-white dark:bg-charcoal-800 text-indigo-600 dark:text-indigo-300 border-2 border-indigo-600 dark:border-indigo-500 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform transition-all duration-300 flex items-center gap-2 group"
                   >
                     Learn More
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  </a>
                 </motion.div>
               </div>
               
@@ -97,30 +103,6 @@ const Landing = () => {
                 </div>
               </div>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Resume Analyzer Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-indigo-50/50 to-cyan-50/50 dark:from-indigo-900/10 dark:to-cyan-900/10">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} 
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
-              Try Our <span className="bg-gradient-to-r from-indigo-600 to-cyan-500 bg-clip-text text-transparent">Resume Analyzer</span>
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Upload your resume and get instant AI-powered analysis with actionable feedback to improve your job prospects.
-            </p>
-          </motion.div>
-          
-          <div className="flex justify-center">
-            <ModernResumeAnalyzer />
           </div>
         </div>
       </section>
@@ -216,7 +198,7 @@ const Landing = () => {
                 desc: 'Easily upload your resume in PDF, DOCX, or plain text format. Our secure system ensures your data is protected and ready for analysis in moments.',
                 color: 'indigo',
                 reverse: false,
-                image: 'https://media.istockphoto.com/id/1402436756/photo/uploading-documents-from-folder-open-file-folder-with-flying-blank-documents-with-laptop.webp'
+                image: '/assets/resume-step1.png'
               },
               {
                 step: 2,
@@ -253,13 +235,15 @@ const Landing = () => {
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-2xl transform rotate-3 blur-lg opacity-30"></div>
                     <div className="relative rounded-2xl overflow-hidden shadow-2xl glass border border-white/20">
-                        {/* Image Rendering */}
-                        <img 
-                            src={item.image} 
-                            alt={item.title} 
-                            className="w-full h-auto object-cover transform hover:scale-105 transition-transform duration-700"
-                            loading="lazy"
-                        />
+                        {/* Fixed Aspect Ratio Wrapper - Shared by all 3 images */}
+                        <div className="relative w-full overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                            <img 
+                                src={item.image} 
+                                alt={item.title} 
+                                className="absolute inset-0 w-full h-full object-cover transform hover:scale-105 transition-transform duration-700"
+                                loading="lazy"
+                            />
+                        </div>
                     </div>
                   </motion.div>
                 </div>
@@ -501,13 +485,20 @@ const Landing = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Link
-                  to="/demo"
+                <a
+                  href="#how-it-works"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const element = document.getElementById('how-it-works');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
                   className="px-8 py-4 bg-transparent text-white border-2 border-white rounded-xl font-semibold text-lg hover:bg-white/10 transition-colors flex items-center gap-2 group"
                 >
                   Watch Demo
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                </a>
               </motion.div>
             </div>
           </motion.div>

@@ -30,13 +30,17 @@ export const analyzeResumeForATS = async (req, res) => {
     }
 
     // Extract text from PDF
+    // Pass the full req.file object - function handles both buffer and path
     let resumeText;
     try {
-      resumeText = await extractTextFromPdf(filePath);
+      resumeText = await extractTextFromPdf(req.file);
     } catch (error) {
+      console.error('PDF extraction error:', error);
+      
+      // Error messages are already user-friendly from extractTextFromPdf
       return res.status(500).json({
         success: false,
-        error: `Failed to extract text from PDF: ${error.message}`
+        error: error.message || 'Failed to extract text from PDF'
       });
     }
 
