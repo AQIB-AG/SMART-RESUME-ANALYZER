@@ -5,9 +5,8 @@ import {
   Upload,
   User,
   Settings,
-  LogOut,
-  Menu,
-  X
+  X,
+  Home
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,9 +23,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   };
 
   const navItems = [
-    { path: '/profile', icon: User, label: 'Profile' },
-    { path: '/upload', icon: Upload, label: 'Upload Resume' },
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/upload', icon: Upload, label: 'Upload Resume' },
+    { path: '/profile', icon: User, label: 'Profile' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
@@ -64,26 +63,40 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={onClose}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-charcoal-700'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
+          <nav className="flex-1 flex flex-col min-h-0 p-4">
+            <div className="flex-1 overflow-y-auto space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={onClose}
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-charcoal-700'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Return to Home - bottom only, separated, exit-style */}
+            <div className="mt-auto pt-4 border-t border-gray-200 dark:border-charcoal-700">
+              <Link
+                to="/"
+                onClick={onClose}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                <Home className="w-5 h-5" />
+                <span className="font-medium">Return to Home</span>
+              </Link>
+            </div>
           </nav>
         </div>
       </aside>

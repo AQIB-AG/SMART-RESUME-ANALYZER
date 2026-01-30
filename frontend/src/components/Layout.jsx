@@ -9,11 +9,24 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [hasNewAnalysis, setHasNewAnalysis] = useState(() =>
+    typeof window !== 'undefined' && localStorage.getItem('hasNewAnalysis') === 'true'
+  );
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const userMenuRef = useRef(null);
   const notificationsRef = useRef(null);
+
+  const handleBellClick = () => {
+    if (hasNewAnalysis) {
+      setHasNewAnalysis(false);
+      localStorage.setItem('hasNewAnalysis', 'false');
+    }
+    setNotificationsOpen((prev) => !prev);
+  };
+
+  const analysisScore = typeof window !== 'undefined' ? localStorage.getItem('analysisScore') : null;
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -66,11 +79,17 @@ const Layout = ({ children }) => {
             {/* Notifications Bell */}
             <div className="relative" ref={notificationsRef}>
               <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                onClick={handleBellClick}
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 text-gray-600 dark:text-gray-300 relative transition-colors"
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
+                {hasNewAnalysis && (
+                  <span
+                    className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"
+                    aria-hidden="true"
+                  />
+                )}
               </button>
               
               {notificationsOpen && (
@@ -78,10 +97,22 @@ const Layout = ({ children }) => {
                   <div className="p-4 border-b border-gray-200 dark:border-charcoal-700">
                     <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
                   </div>
-                  <div className="p-8 text-center">
-                    <Bell className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
-                    <p className="text-gray-600 dark:text-gray-400">No notifications yet</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">You'll see updates here when they arrive</p>
+                  <div className="p-4">
+                    {analysisScore !== null && analysisScore !== '' ? (
+                      <div className="rounded-lg border border-gray-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 p-4 shadow-sm">
+                        <p className="text-indigo-500 font-medium mb-1">Resume analysis complete</p>
+                        <p className="text-gray-800 dark:text-gray-200 text-sm mb-2">
+                          Your resume has been analyzed successfully.
+                        </p>
+                        <p className="text-cyan-500 font-semibold">Your score: {analysisScore}%</p>
+                      </div>
+                    ) : (
+                      <div className="p-8 text-center">
+                        <Bell className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                        <p className="text-gray-600 dark:text-gray-400">No notifications yet</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">You'll see updates here when they arrive</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { resumeAPI } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 import { Upload, RefreshCw, Clock, ArrowRight, TrendingUp, Target, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -10,6 +11,14 @@ const Dashboard = () => {
   const [resumes, setResumes] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const skillGapSectionRef = useRef(null);
+  const recentAnalysesRef = useRef(null);
+
+  const isDark = theme === 'dark';
+  const chartAxisColor = isDark ? '#22d3ee' : '#334155';
+  const chartTickColor = isDark ? '#a5f3fc' : '#334155';
+  const chartGridStroke = isDark ? 'rgba(34, 211, 238, 0.25)' : 'rgba(0, 0, 0, 0.1)';
 
   useEffect(() => {
     fetchResumes();
@@ -196,7 +205,7 @@ const Dashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/skillgap')}
+                onClick={() => skillGapSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-cyan-500 to-electric-blue-500 text-white rounded-xl hover:shadow-xl transition-all duration-300 group"
               >
                 <Target className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
@@ -207,7 +216,7 @@ const Dashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/resume-result')}
+                onClick={() => recentAnalysesRef.current?.scrollIntoView({ behavior: 'smooth' })}
                 className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-electric-blue-500 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 group"
               >
                 <TrendingUp className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
@@ -241,9 +250,9 @@ const Dashboard = () => {
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
-                  <XAxis dataKey="name" stroke="currentColor" opacity={0.6} />
-                  <YAxis stroke="currentColor" opacity={0.6} domain={[0, 100]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                  <XAxis dataKey="name" stroke={chartAxisColor} tick={{ fill: chartTickColor }} />
+                  <YAxis stroke={chartAxisColor} tick={{ fill: chartTickColor }} domain={[0, 100]} />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'rgba(255, 255, 255, 0.9)', 
@@ -260,6 +269,7 @@ const Dashboard = () => {
 
           {/* Skill Gap Analysis */}
           <motion.div
+            ref={skillGapSectionRef}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -300,6 +310,7 @@ const Dashboard = () => {
 
         {/* Recent Analyses */}
         <motion.div
+          ref={recentAnalysesRef}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}

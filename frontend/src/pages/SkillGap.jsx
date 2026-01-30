@@ -1,12 +1,17 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { TrendingUp, Target, BookOpen, Upload, BarChart3, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SkillGap = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isInDashboard = location.pathname === '/dashboard/skill-gap';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-900 dark:to-charcoal-900">
-      <Navbar />
+      {!isInDashboard && <Navbar />}
       <div className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -39,6 +44,7 @@ const SkillGap = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/upload')}
                 className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
               >
                 <Upload className="w-5 h-5" />
@@ -48,6 +54,7 @@ const SkillGap = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/dashboard/analytics')}
                 className="px-6 py-3 bg-white dark:bg-charcoal-700 text-gray-900 dark:text-white rounded-xl font-semibold border border-gray-300 dark:border-charcoal-600 hover:shadow-md transition-all duration-300 flex items-center gap-2"
               >
                 <BarChart3 className="w-5 h-5" />

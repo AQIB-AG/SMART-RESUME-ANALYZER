@@ -1,21 +1,15 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Moon, Sun, Menu, X, Sparkles, User, Upload, BarChart3, Settings, LogOut } from 'lucide-react';
+import { Moon, Sun, Menu, X, Sparkles, User, Upload, BarChart3, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
+import UserMenu from './UserMenu';
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/');
-    setIsMenuOpen(false);
-  };
 
   const navItems = [
     { name: 'Features', path: '/', hash: '#features' },
@@ -129,24 +123,7 @@ const Navbar = () => {
                   </motion.div>
                 </>
               ) : (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm">
-                    {user?.email?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <span className="text-gray-700 dark:text-gray-300 font-medium hidden md:block">
-                    {user?.email?.split('@')[0]}
-                  </span>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={handleLogout}
-                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 transition-colors"
-                    aria-label="Logout"
-                    title="Logout"
-                  >
-                    <LogOut className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                  </motion.button>
-                </div>
+                <UserMenu user={user} />
               )}
             </div>
           </div>
@@ -235,25 +212,8 @@ const Navbar = () => {
                       {item.name}
                     </Link>
                   ))}
-                  <div className="flex items-center justify-between pt-2 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm">
-                        {user?.email?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                      <span className="text-gray-700 dark:text-gray-300 font-medium">
-                        {user?.email?.split('@')[0]}
-                      </span>
-                    </div>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={handleLogout}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 transition-colors flex items-center gap-2 text-gray-700 dark:text-gray-300 font-medium"
-                      aria-label="Logout"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
-                    </motion.button>
+                  <div className="pt-2 px-4">
+                    <UserMenu user={user} />
                   </div>
                 </>
               )}

@@ -107,10 +107,13 @@ const Upload = () => {
           throw new Error(responseData?.error || 'Analysis failed');
         }
         
+        const score = responseData?.score ?? responseData?.atsScore ?? 75;
         setResult({
-          score: responseData?.score || responseData?.atsScore || 75,
+          score,
           feedback: responseData?.feedback || 'Your resume has been analyzed successfully. Consider adding more relevant keywords and quantifiable achievements to improve your ATS score.'
         });
+        localStorage.setItem('hasNewAnalysis', 'true');
+        localStorage.setItem('analysisScore', String(score));
       } else {
         throw new Error(responseData?.error || 'Analysis failed');
       }

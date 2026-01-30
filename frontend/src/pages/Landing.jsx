@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import HeroAnimatedBackground from '../components/HeroAnimatedBackground';
+import Hero3DBackground from '../components/Hero3DBackground';
 import { Sparkles, Search, Target, Palette, ArrowRight, Check, Star, Zap, TrendingUp, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -24,16 +26,23 @@ const Landing = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-900 dark:to-charcoal-900">
       <Navbar />
       
-      {/* Hero Section */}
-      <section className="py-20 px-4 relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-20 animate-blob"></div>
-          <div className="absolute top-40 right-20 w-72 h-72 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-electric-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 dark:opacity-10 animate-blob animation-delay-4000"></div>
+      {/* Animated background: Hero + Powerful AI Features (below Navbar until end of Features) */}
+      <div className="relative overflow-hidden" style={{ background: 'transparent' }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
+          <Hero3DBackground />
         </div>
-        
-        <div className="container mx-auto max-w-6xl relative">
+
+        {/* Hero Section */}
+        <section className="py-20 px-4 relative z-10 overflow-hidden" style={{ background: 'transparent' }}>
+          {/* Background Elements */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10" style={{ background: 'transparent' }}>
+            <HeroAnimatedBackground />
+            <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-20 animate-blob"></div>
+            <div className="absolute top-40 right-20 w-72 h-72 bg-cyan-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-20 animate-blob animation-delay-2000"></div>
+            <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-electric-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 dark:opacity-10 animate-blob animation-delay-4000"></div>
+          </div>
+
+          <div className="container mx-auto max-w-6xl relative z-10">
           <div className="text-center max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -105,72 +114,73 @@ const Landing = () => {
             </motion.div>
           </div>
         </div>
-      </section>
+        </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
-              Powerful <span className="bg-gradient-to-r from-indigo-600 to-cyan-500 bg-clip-text text-transparent">AI Features</span>
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Discover how Smart Resume Analyzer gives you the edge in today's competitive job market with intelligent insights and actionable advice.
-            </p>
-          </motion.div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { 
-                icon: Sparkles, 
-                title: 'AI-Powered Feedback', 
-                desc: 'Receive instant, intelligent feedback on your resume\'s content, structure, and keyword optimization to stand out.',
-                color: 'from-indigo-500 to-electric-blue-500'
-              },
-              { 
-                icon: Search, 
-                title: 'ATS Optimization Check', 
-                desc: 'Ensure your resume passes Applicant Tracking Systems with our comprehensive analysis for keywords and formatting.',
-                color: 'from-cyan-500 to-electric-blue-500'
-              },
-              { 
-                icon: Target, 
-                title: 'Skill Gap Identification', 
-                desc: 'Identify missing skills and relevant industry keywords by comparing your resume against desired job descriptions.',
-                color: 'from-electric-blue-500 to-cyan-500'
-              },
-              { 
-                icon: Palette, 
-                title: 'Customizable Templates', 
-                desc: 'Access a library of modern, professional templates and formatting tools to make your resume visually appealing.',
-                color: 'from-indigo-500 to-cyan-500'
-              },
-            ].map((feature, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -10 }}
-                className="bg-white dark:bg-charcoal-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl border border-gray-100 dark:border-charcoal-700 transition-all duration-300"
-              >
-                <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg`}>
-                  <feature.icon className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{feature.title}</h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.desc}</p>
-              </motion.div>
-            ))}
+        {/* Powerful AI Features Section (inside same animated background container) */}
+        <section id="features" className="py-20 px-4 relative z-10" style={{ background: 'transparent' }}>
+          <div className="container mx-auto max-w-6xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-heading">
+                Powerful <span className="bg-gradient-to-r from-indigo-600 to-cyan-500 bg-clip-text text-transparent">AI Features</span>
+              </h2>
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                Discover how Smart Resume Analyzer gives you the edge in today's competitive job market with intelligent insights and actionable advice.
+              </p>
+            </motion.div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                { 
+                  icon: Sparkles, 
+                  title: 'AI-Powered Feedback', 
+                  desc: 'Receive instant, intelligent feedback on your resume\'s content, structure, and keyword optimization to stand out.',
+                  color: 'from-indigo-500 to-electric-blue-500'
+                },
+                { 
+                  icon: Search, 
+                  title: 'ATS Optimization Check', 
+                  desc: 'Ensure your resume passes Applicant Tracking Systems with our comprehensive analysis for keywords and formatting.',
+                  color: 'from-cyan-500 to-electric-blue-500'
+                },
+                { 
+                  icon: Target, 
+                  title: 'Skill Gap Identification', 
+                  desc: 'Identify missing skills and relevant industry keywords by comparing your resume against desired job descriptions.',
+                  color: 'from-electric-blue-500 to-cyan-500'
+                },
+                { 
+                  icon: Palette, 
+                  title: 'Customizable Templates', 
+                  desc: 'Access a library of modern, professional templates and formatting tools to make your resume visually appealing.',
+                  color: 'from-indigo-500 to-cyan-500'
+                },
+              ].map((feature, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -10 }}
+                  className="bg-white dark:bg-charcoal-800 rounded-2xl p-8 shadow-lg hover:shadow-2xl border border-gray-100 dark:border-charcoal-700 transition-all duration-300"
+                >
+                  <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg`}>
+                    <feature.icon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{feature.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.desc}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* How It Works Section */}
       <section id="how-it-works" className="py-20 px-4 bg-white dark:bg-charcoal-900">
