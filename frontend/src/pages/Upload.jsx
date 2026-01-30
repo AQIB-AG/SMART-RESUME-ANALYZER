@@ -114,6 +114,7 @@ const Upload = () => {
         });
         localStorage.setItem('hasNewAnalysis', 'true');
         localStorage.setItem('analysisScore', String(score));
+        window.dispatchEvent(new CustomEvent('newAnalysisComplete'));
       } else {
         throw new Error(responseData?.error || 'Analysis failed');
       }

@@ -159,3 +159,14 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   border: 2px solid rgba(34, 197, 94, 0.8) !important;
   animation: neon-pulse-green 2s ease-in-out infinite, neon-rotate 3s linear infinite;
 }
+
+/* Shake animation for notification bell */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out infinite;
+}

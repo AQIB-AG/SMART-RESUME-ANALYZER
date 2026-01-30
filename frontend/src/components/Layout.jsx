@@ -19,14 +19,26 @@ const Layout = ({ children }) => {
   const notificationsRef = useRef(null);
 
   const handleBellClick = () => {
+    // Reset new analysis flag (this allows new analyses to trigger notifications again)
     if (hasNewAnalysis) {
       setHasNewAnalysis(false);
       localStorage.setItem('hasNewAnalysis', 'false');
     }
+    
+    // Toggle notifications dropdown
     setNotificationsOpen((prev) => !prev);
   };
 
   const analysisScore = typeof window !== 'undefined' ? localStorage.getItem('analysisScore') : null;
+
+  // Sync with localStorage when a new analysis completes (e.g. from Upload page)
+  useEffect(() => {
+    const handleNewAnalysis = () => {
+      setHasNewAnalysis(true);
+    };
+    window.addEventListener('newAnalysisComplete', handleNewAnalysis);
+    return () => window.removeEventListener('newAnalysisComplete', handleNewAnalysis);
+  }, []);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -80,13 +92,15 @@ const Layout = ({ children }) => {
             <div className="relative" ref={notificationsRef}>
               <button
                 onClick={handleBellClick}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 text-gray-600 dark:text-gray-300 relative transition-colors"
+                className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 text-gray-600 dark:text-gray-300 relative transition-colors ${
+                  hasNewAnalysis ? 'animate-shake' : ''
+                }`}
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
                 {hasNewAnalysis && (
                   <span
-                    className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full animate-pulse"
+                    className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white dark:border-charcoal-800 animate-pulse"
                     aria-hidden="true"
                   />
                 )}
