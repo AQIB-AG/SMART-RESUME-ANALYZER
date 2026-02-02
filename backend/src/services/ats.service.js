@@ -244,7 +244,11 @@ const performAtsAnalysis = (resumeText) => {
       keywordDensity: parseFloat(keywordDensity.toFixed(2)),
       matchedTechnical,
       matchedSoft,
-      matchedFormats
+      matchedFormats,
+      hasExperienceSection,
+      hasEducationSection,
+      hasSkillsSection: lowerText.includes('skills'),
+      contactMatches
     }
   };
 };

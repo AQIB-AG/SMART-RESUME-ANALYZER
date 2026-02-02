@@ -47,7 +47,15 @@ const resumeSchema = new mongoose.Schema({
     type: String,
     enum: ['uploaded', 'processing', 'completed', 'failed'],
     default: 'uploaded'
-  }
+  },
+  // AI-powered analysis (optional; populated when HF_TOKEN is set)
+  bestFitRole: { type: String },
+  jobMatchPercentage: { type: Number },
+  skillGaps: [{ type: String }],
+  strengthAreas: [{ type: String }],
+  aiExplanation: { type: String },
+  aiUsed: { type: Boolean, default: false },
+  jobDescriptionUsed: { type: String }
 }, {
   timestamps: true
 });

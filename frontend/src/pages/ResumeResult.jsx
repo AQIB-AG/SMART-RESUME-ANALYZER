@@ -11,81 +11,107 @@ const ResumeResult = () => {
   const navigate = useNavigate();
   const [resume, setResume] = useState(null);
   const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
     fetchResumeData();
   }, [id]);
 
   const fetchResumeData = async () => {
+    setIsLoading(true);
+    setFetchError(null);
     try {
       const [resumeRes, analysisRes] = await Promise.all([
-        resumeAPI.getOne(id),
+        resumeAPI.getOne(id).catch((err) => ({ success: false, error: err })),
         analysisAPI.getSummary(id).catch(() => null)
       ]);
 
-      if (resumeRes.success) {
+      if (resumeRes?.success && resumeRes?.data?.resume) {
         setResume(resumeRes.data.resume);
+      } else {
+        setResume(null);
       }
 
-      if (analysisRes?.success) {
+      if (analysisRes?.success && analysisRes?.data) {
         setAnalysis(analysisRes.data);
       } else {
-        // Trigger analysis if not done
         try {
-          await analysisAPI.analyze(id);
-          const newAnalysis = await analysisAPI.getSummary(id);
-          if (newAnalysis.success) {
-            setAnalysis(newAnalysis.data);
+          const analyzeRes = await analysisAPI.analyze(id);
+          if (analyzeRes?.success && analyzeRes?.data) {
+            setAnalysis(analyzeRes.data);
+          } else {
+            setAnalysis(null);
           }
         } catch (err) {
-          console.error('Analysis error:', err);
+          console.error('Analysis fetch error:', err);
+          setAnalysis(null);
         }
       }
     } catch (error) {
       console.error('Error fetching resume:', error);
+      setFetchError(error?.message || 'Failed to load data');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Analyzing your resume...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading analysis...</p>
           </div>
         </div>
       </Layout>
     );
   }
 
-  if (!resume) {
+  if (fetchError || !resume) {
     return (
       <Layout>
         <div className="p-8 text-center">
-          <p className="text-gray-600 dark:text-gray-400">Resume not found</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            {fetchError || 'Resume not found.'}
+          </p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </Layout>
     );
   }
 
-  const score = resume.ats_score || analysis?.ats_score || 0;
-  const getScoreLabel = (score) => {
-    if (score >= 80) return { label: 'Excellent Match!', emoji: '🔥', color: 'text-red-500' };
-    if (score >= 60) return { label: 'Good', emoji: '😃', color: 'text-green-500' };
+  const aiUsed = analysis?.ai_used ?? resume.aiUsed ?? false;
+  const atsScore =
+    analysis?.ats_score ?? resume?.ats_score ?? resume?.atsScore ?? 0;
+  const scoreSource = analysis?.score_source ?? (resume?.aiUsed ? 'ai' : 'keyword');
+  const getScoreLabel = (s) => {
+    if (s >= 80) return { label: 'Excellent Match!', emoji: '🔥', color: 'text-red-500' };
+    if (s >= 60) return { label: 'Good', emoji: '😃', color: 'text-green-500' };
     return { label: 'Needs Improvement', emoji: '⚠️', color: 'text-yellow-500' };
   };
 
-  const scoreInfo = getScoreLabel(score);
-  const matchedSkills = analysis?.extracted_skills || resume.extracted_skills || [];
-  const sectionsAnalysis = analysis?.sections_analysis || resume.sections_analysis || {};
+  const scoreInfo = getScoreLabel(atsScore);
+  const matchedSkills = analysis?.extracted_skills ?? resume?.skills ?? [];
+  const sectionsAnalysis = analysis?.sections_analysis ?? resume?.sections_analysis ?? {};
+  const missingSkills = analysis?.skill_gaps ?? resume?.skillGaps ?? [];
+  const aiExplanation = analysis?.ai_explanation ?? resume?.aiExplanation ?? '';
+  const feedback = analysis?.feedback ?? resume?.feedback ?? '';
+  const bestFitRole = analysis?.best_fit_role ?? resume?.bestFitRole;
+  const jobMatchPercentage = analysis?.job_match_percentage ?? resume?.jobMatchPercentage;
+  const strengthAreas = analysis?.strength_areas ?? resume?.strengthAreas ?? [];
 
-  // Mock missing skills and recommendations (replace with actual data when available)
-  const missingSkills = ['Machine Learning', 'Cloud Security', 'DevOps Tools (e.g., Kubernetes)', 'Microservices Architecture', 'GoLang', 'GraphQL'];
-  const recommendations = [
+  const genericRecommendations = [
     'Quantify achievements with specific metrics (e.g., "Increased revenue by 15%").',
     'Tailor your resume for each specific job application by highlighting relevant keywords.',
     'Consider adding a "Projects" section to showcase your practical experience.',
@@ -96,16 +122,16 @@ const ResumeResult = () => {
   // Generate chart data
   const generateChartData = () => {
     return [
-      { name: 'ATS Score', value: score },
-      { name: 'Remaining', value: 100 - score },
+      { name: 'ATS Score', value: atsScore },
+      { name: 'Remaining', value: 100 - atsScore },
     ];
   };
 
   const COLORS = ['#6366f1', '#e5e7eb'];
 
   const skillChartData = [
-    { name: 'Matched', value: matchedSkills.length },
-    { name: 'Missing', value: missingSkills.length },
+    { name: 'Matched', value: Math.max(0, matchedSkills.length) },
+    { name: 'Missing', value: Math.max(0, missingSkills.length) },
   ];
 
   const skillColors = ['#10b981', '#f59e0b'];
@@ -114,6 +140,18 @@ const ResumeResult = () => {
     <Layout>
       <div className="p-6 md:p-8 bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-navy-900 dark:to-charcoal-900 min-h-screen">
         <div className="max-w-7xl mx-auto">
+          {analysis == null && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl text-amber-800 dark:text-amber-200"
+            >
+              <p className="font-medium">
+                Analysis data not found. Please re-analyze the resume from Upload to generate a full report.
+              </p>
+            </motion.div>
+          )}
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -137,11 +175,23 @@ const ResumeResult = () => {
               className="lg:col-span-1"
             >
               <div className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 dark:border-charcoal-700/50">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-white" />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-lg">
+                      <TrendingUp className="w-6 h-6 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Resume Score</h2>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Resume Score</h2>
+                  {aiUsed && (
+                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
+                      AI Analyzed
+                    </span>
+                  )}
+                  {import.meta.env.DEV && scoreSource && (
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400" title="scoreSource">
+                      [{scoreSource}]
+                    </span>
+                  )}
                 </div>
                 
                 <div className="flex flex-col items-center mb-6">
@@ -162,7 +212,7 @@ const ResumeResult = () => {
                           ))}
                         </Pie>
                         <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {score}%
+                          {atsScore}%
                         </text>
                       </PieChart>
                     </ResponsiveContainer>
@@ -170,12 +220,26 @@ const ResumeResult = () => {
                   <div className={`text-3xl mb-2 ${scoreInfo.color}`}>{scoreInfo.emoji}</div>
                   <div className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{scoreInfo.label}</div>
                   <p className="text-gray-600 dark:text-gray-300 text-center text-sm">
-                    {score >= 80
-                      ? `Your resume is ${score}% job-ready 🚀 Let's push it to 95%+`
-                      : score >= 60
-                      ? `Your resume is ${score}% job-ready. Good progress!`
-                      : `Your resume is ${score}% job-ready. Focus on adding relevant skills.`}
+                    {atsScore >= 80
+                      ? `Your resume is ${atsScore}% job-ready 🚀 Let's push it to 95%+`
+                      : atsScore >= 60
+                      ? `Your resume is ${atsScore}% job-ready. Good progress!`
+                      : `Your resume is ${atsScore}% job-ready. Focus on adding relevant skills.`}
                   </p>
+                  {(bestFitRole != null || jobMatchPercentage != null) && (
+                    <div className="flex flex-wrap gap-2 justify-center mt-2">
+                      {bestFitRole != null && (
+                        <span className="px-3 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-sm font-medium">
+                          Best-fit: {bestFitRole}
+                        </span>
+                      )}
+                      {jobMatchPercentage != null && (
+                        <span className="px-3 py-1 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 text-sm font-medium">
+                          Match: {jobMatchPercentage}%
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-4">
@@ -258,7 +322,7 @@ const ResumeResult = () => {
                 </div>
               </motion.div>
 
-              {/* Missing Skill Suggestions */}
+              {/* Missing Skill Suggestions / Skill gaps */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -269,24 +333,34 @@ const ResumeResult = () => {
                   <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
                     <AlertTriangle className="w-6 h-6 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Missing Skill Suggestions</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
+                    {missingSkills.length ? 'Skill Gaps / Missing Skills' : 'Missing Skill Suggestions'}
+                  </h2>
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Consider adding these highly sought-after skills to enhance your resume for relevant job applications.
+                  {missingSkills.length
+                    ? 'Consider adding or highlighting these skills to improve your match for the target role or job.'
+                    : 'Consider adding these highly sought-after skills to enhance your resume for relevant job applications.'}
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  {missingSkills?.map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="px-4 py-2 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-medium border border-yellow-200 dark:border-yellow-700/50"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+                  {missingSkills.length > 0
+                    ? missingSkills.map((skill, idx) => (
+                        <span
+                          key={idx}
+                          className="px-4 py-2 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900/30 dark:to-orange-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-sm font-medium border border-yellow-200 dark:border-yellow-700/50"
+                        >
+                          {skill}
+                        </span>
+                      ))
+                    : ['Relevant keywords for target role', 'Quantifiable achievements', 'Clear section headings', 'Contact & links'].map((s, idx) => (
+                        <span key={idx} className="px-4 py-2 bg-gray-100 dark:bg-charcoal-700 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+                          {s}
+                        </span>
+                      ))}
                 </div>
               </motion.div>
 
-              {/* Actionable Recommendations */}
+              {/* AI Explanation / Feedback / Actionable Recommendations */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -297,27 +371,39 @@ const ResumeResult = () => {
                   <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
                     <Target className="w-6 h-6 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">Actionable Recommendations</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
+                    {aiUsed ? 'AI Analysis & Recommendations' : 'Actionable Recommendations'}
+                  </h2>
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Follow these personalized steps to significantly improve your resume's impact and effectiveness.
+                  {aiUsed
+                    ? 'Recruiter-style feedback based on your resume and target role or job description.'
+                    : "Follow these personalized steps to significantly improve your resume's impact and effectiveness."}
                 </p>
-                <ul className="space-y-4">
-                  {recommendations.map((rec, idx) => (
-                    <motion.li
-                      key={idx}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="flex items-start gap-4 p-4 bg-white/30 dark:bg-charcoal-700/30 rounded-xl border border-white/40 dark:border-charcoal-600/50"
-                    >
-                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
-                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                      </div>
-                      <span className="text-gray-700 dark:text-gray-300 flex-1">{rec}</span>
-                    </motion.li>
-                  ))}
-                </ul>
+                {aiUsed ? (
+                  <div className="p-4 bg-white/30 dark:bg-charcoal-700/30 rounded-xl border border-white/40 dark:border-charcoal-600/50">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {aiExplanation || feedback || 'AI analysis completed successfully.'}
+                    </p>
+                  </div>
+                ) : (
+                  <ul className="space-y-4">
+                    {genericRecommendations.map((rec, idx) => (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        className="flex items-start gap-4 p-4 bg-white/30 dark:bg-charcoal-700/30 rounded-xl border border-white/40 dark:border-charcoal-600/50"
+                      >
+                        <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
+                          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="text-gray-700 dark:text-gray-300 flex-1">{rec}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                )}
               </motion.div>
             </div>
           </div>

@@ -37,9 +37,9 @@ const Dashboard = () => {
     }
   };
 
-  // Calculate average score
+  // Average score from stored values only (no client-side score calculation)
   const avgScore = resumes.length > 0
-    ? Math.round(resumes.reduce((acc, r) => acc + (r.ats_score || 0), 0) / resumes.length)
+    ? Math.round(resumes.reduce((acc, r) => acc + (r.ats_score ?? r.atsScore ?? 0), 0) / resumes.length)
     : 0;
 
   // Get score label and emoji
@@ -57,9 +57,9 @@ const Dashboard = () => {
     if (resumes.length === 0) return [];
     
     const data = resumes.slice(0, 5).map((resume, index) => ({
-      name: resume.original_filename || `Resume ${index + 1}`,
-      score: resume.ats_score || 0,
-      date: new Date(resume.upload_date).toLocaleDateString()
+      name: resume.original_filename || resume.originalFileName || `Resume ${index + 1}`,
+      score: resume.ats_score ?? resume.atsScore ?? 0,
+      date: new Date(resume.upload_date ?? resume.createdAt).toLocaleDateString()
     }));
     
     return data;
@@ -350,16 +350,28 @@ const Dashboard = () => {
                   onClick={() => navigate(`/resume-result/${resume.id}`)}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {resume.ats_score || 0}%
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {(resume.ats_score ?? resume.atsScore ?? 0)}%
+                      </span>
+                      {(resume.ai_used ?? resume.aiUsed) && (
+                        <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
+                          AI
+                        </span>
+                      )}
+                      {import.meta.env.DEV && (resume.score_source ?? resume.scoreSource) && (
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400" title="scoreSource">
+                          [{resume.score_source ?? resume.scoreSource}]
+                        </span>
+                      )}
                     </div>
                     <ArrowRight className="w-5 h-5 text-gray-400" />
                   </div>
                   <div className="text-sm text-gray-700 dark:text-gray-300 mb-2 truncate">
-                    {resume.original_filename || 'Resume'}
+                    {resume.original_filename ?? resume.originalFileName ?? 'Resume'}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    {new Date(resume.upload_date).toLocaleDateString()}
+                    {new Date(resume.upload_date ?? resume.createdAt).toLocaleDateString()}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>

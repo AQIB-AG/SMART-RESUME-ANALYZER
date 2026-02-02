@@ -1,47 +1,42 @@
+import mongoose from 'mongoose';
 import Resume from '../models/Resume.model.js';
 
 /**
- * Analyze resume
+ * Analyze resume (returns stored analysis data)
  */
 export const analyzeResume = async (req, res) => {
   try {
     const resumeId = req.params.id;
-    
-    // Fetch resume from database
-    const resume = await Resume.findById(resumeId);
-    
-    if (!resume) {
-      return res.status(404).json({
-        success: false,
-        error: 'Resume not found'
-      });
+    if (!mongoose.Types.ObjectId.isValid(resumeId)) {
+      return res.status(400).json({ success: false, error: 'Invalid resume id' });
     }
-    
-    // Check permissions
+    const resume = await Resume.findById(resumeId);
+    if (!resume) {
+      return res.status(404).json({ success: false, error: 'Resume not found' });
+    }
     const userId = req.user.id;
     const userRole = req.user.role;
     if (userRole !== 'admin' && resume.userId.toString() !== userId.toString()) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied'
-      });
+      return res.status(403).json({ success: false, error: 'Access denied' });
     }
-    
-    // Return stored analysis data
+    const technicalList = ['javascript', 'python', 'java', 'react', 'angular', 'vue', 'node.js', 'express',
+      'html', 'css', 'sql', 'mongodb', 'postgresql', 'mysql', 'git', 'github', 'docker',
+      'aws', 'azure', 'gcp', 'rest', 'api', 'json', 'xml', 'agile', 'scrum', 'oop'];
+    const softList = ['communication', 'teamwork', 'leadership', 'problem solving', 'critical thinking',
+      'adaptability', 'creativity', 'attention to detail', 'time management', 'collaboration'];
     const analysisResult = {
       ats_score: resume.atsScore,
       feedback: resume.feedback,
+      best_fit_role: resume.bestFitRole,
+      job_match_percentage: resume.jobMatchPercentage,
+      skill_gaps: resume.skillGaps,
+      strength_areas: resume.strengthAreas,
+      ai_explanation: resume.aiExplanation,
+      ai_used: resume.aiUsed,
       skills: {
-        all_skills: resume.skills,
-        technical_skills: resume.skills.filter(skill => 
-          ['javascript', 'python', 'java', 'react', 'angular', 'vue', 'node.js', 'express',
-           'html', 'css', 'sql', 'mongodb', 'postgresql', 'mysql', 'git', 'github', 'docker',
-           'aws', 'azure', 'gcp', 'rest', 'api', 'json', 'xml', 'agile', 'scrum', 'oop'].includes(skill.toLowerCase())
-        ),
-        soft_skills: resume.skills.filter(skill => 
-          ['communication', 'teamwork', 'leadership', 'problem solving', 'critical thinking',
-           'adaptability', 'creativity', 'attention to detail', 'time management', 'collaboration'].includes(skill.toLowerCase())
-        ),
+        all_skills: resume.skills || [],
+        technical_skills: (resume.skills || []).filter(s => technicalList.includes((s || '').toLowerCase())),
+        soft_skills: (resume.skills || []).filter(s => softList.includes((s || '').toLowerCase())),
         certifications: []
       },
       sections_analysis: {
@@ -50,28 +45,18 @@ export const analyzeResume = async (req, res) => {
         grammar: { score: resume.atsScore ? Math.min(100, resume.atsScore + 10) : 0, feedback: 'Grammar and spelling evaluation' },
         keywords: { score: resume.atsScore ? Math.min(100, resume.atsScore - 5) : 0, feedback: 'Keyword density evaluation' }
       },
-      contact_info: {
-        email: resume.email,
-        name: resume.name
-      },
-      education: [], // Placeholder - would extract from resumeText
-      experience: [] // Placeholder - would extract from resumeText
+      contact_info: { email: resume.email, name: resume.name },
+      education: [],
+      experience: []
     };
-
     res.json({
       success: true,
       message: 'Resume analyzed successfully',
-      data: {
-        resume_id: resumeId,
-        ...analysisResult
-      }
+      data: { resume_id: resumeId, ...analysisResult }
     });
   } catch (error) {
     console.error('Analyze resume error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to analyze resume'
-    });
+    res.status(500).json({ success: false, error: 'Failed to analyze resume' });
   }
 };
 
@@ -161,41 +146,52 @@ export const skillGapAnalysis = async (req, res) => {
 };
 
 /**
- * Get analysis summary
+ * Get analysis summary (real resume data from DB including AI analysis)
  */
 export const getAnalysisSummary = async (req, res) => {
   try {
-    const resumeId = parseInt(req.params.id);
-    
-    // Mock summary
-    const mockSummary = {
-      resume_id: resumeId,
-      filename: 'resume.pdf',
-      ats_score: 87,
-      skills_count: 12,
-      status: 'completed',
-      upload_date: new Date().toISOString(),
-      extracted_skills: ['JavaScript', 'React', 'Node.js'],
-      education: [{ degree: 'BS Computer Science' }],
-      experience: [{ title: 'Software Engineer' }],
+    const resumeId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(resumeId)) {
+      return res.status(400).json({ success: false, error: 'Invalid resume id' });
+    }
+    const resume = await Resume.findById(resumeId);
+    if (!resume) {
+      return res.status(404).json({ success: false, error: 'Resume not found' });
+    }
+    const userId = req.user.id;
+    const userRole = req.user.role;
+    if (userRole !== 'admin' && resume.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, error: 'Access denied' });
+    }
+    const summary = {
+      resume_id: resume._id.toString(),
+      filename: resume.originalFileName || resume.fileName || 'resume.pdf',
+      ats_score: resume.atsScore,
+      score_source: resume.aiUsed ? 'ai' : 'keyword',
+      skills_count: (resume.skills || []).length,
+      status: resume.status,
+      upload_date: resume.createdAt ? new Date(resume.createdAt).toISOString() : null,
+      extracted_skills: resume.skills || [],
+      best_fit_role: resume.bestFitRole,
+      job_match_percentage: resume.jobMatchPercentage,
+      skill_gaps: resume.skillGaps || [],
+      strength_areas: resume.strengthAreas || [],
+      ai_explanation: resume.aiExplanation,
+      ai_used: resume.aiUsed,
+      feedback: resume.feedback,
+      education: [],
+      experience: [],
       sections_analysis: {
-        skills: { score: 85 },
-        ats: { score: 87 },
-        grammar: { score: 92 },
-        keywords: { score: 78 }
+        skills: { score: resume.atsScore ? Math.min(100, resume.atsScore) : 0 },
+        ats: { score: resume.atsScore || 0 },
+        grammar: { score: resume.atsScore ? Math.min(100, resume.atsScore + 10) : 0 },
+        keywords: { score: resume.atsScore ? Math.min(100, resume.atsScore - 5) : 0 }
       }
     };
-
-    res.json({
-      success: true,
-      data: mockSummary
-    });
+    res.json({ success: true, data: summary });
   } catch (error) {
     console.error('Get analysis summary error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch analysis summary'
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch analysis summary' });
   }
 };
 

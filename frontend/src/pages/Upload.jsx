@@ -5,9 +5,13 @@ import { analysisAPI } from '../services/api';
 import { Upload as UploadIcon, FileText, CheckCircle, X, Cloud, Zap, Target, TrendingUp, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const MIN_LOADING_TIME = 10000;
+
 const Upload = () => {
   const [file, setFile] = useState(null);
+  const [jobDescription, setJobDescription] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [analyzingStep, setAnalyzingStep] = useState('');
@@ -16,7 +20,7 @@ const Upload = () => {
   const navigate = useNavigate();
 
   const analyzingSteps = [
-    'Analyzing your resume...',
+    'Analyzing your resume with AI… This may take a few moments.',
     'Extracting skills...',
     'Calculating ATS score...',
     'Generating feedback...'
@@ -45,19 +49,16 @@ const Upload = () => {
   const handleFile = (selectedFile) => {
     const allowedTypes = ['.pdf', '.doc', '.docx'];
     const ext = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'));
-    
+    setError('');
     if (!allowedTypes.includes(ext)) {
       setError('Please upload a PDF, DOC, or DOCX file');
       return;
     }
-    
     if (selectedFile.size > 5 * 1024 * 1024) {
       setError('File size must be less than 5MB');
       return;
     }
-    
     setFile(selectedFile);
-    setError('');
   };
 
   const handleFileChange = (e) => {
@@ -71,13 +72,17 @@ const Upload = () => {
       setError('Please select a file');
       return;
     }
+    if (isSubmitting || uploading) {
+      return;
+    }
 
+    setIsSubmitting(true);
     setUploading(true);
     setError('');
     setResult(null);
     setAnalyzingStep(analyzingSteps[0]);
+    const startTime = Date.now();
 
-    // Simulate step progression
     const stepInterval = setInterval(() => {
       setAnalyzingStep(prev => {
         const currentIndex = analyzingSteps.indexOf(prev);
@@ -86,61 +91,54 @@ const Upload = () => {
         }
         return prev;
       });
-    }, 1500);
+    }, 2500);
 
     try {
       const formData = new FormData();
       formData.append('resume', file);
+      if (jobDescription.trim()) {
+        formData.append('jobDescription', jobDescription.trim());
+      }
 
-      // analyzeResume uses axios directly, so response structure is { data: {...}, status, ... }
       const response = await analysisAPI.analyzeResume(formData);
-      
       clearInterval(stepInterval);
-      
-      // Extract data from axios response
-      const responseData = response?.data || response;
-      
-      // Check if request was successful (status 200-299)
-      if (response?.status >= 200 && response?.status < 300) {
-        // Success case - response has score and feedback
-        if (responseData?.success === false) {
-          throw new Error(responseData?.error || 'Analysis failed');
-        }
-        
-        const score = responseData?.score ?? responseData?.atsScore ?? 75;
-        setResult({
-          score,
-          feedback: responseData?.feedback || 'Your resume has been analyzed successfully. Consider adding more relevant keywords and quantifiable achievements to improve your ATS score.'
-        });
-        localStorage.setItem('hasNewAnalysis', 'true');
-        localStorage.setItem('analysisScore', String(score));
-        window.dispatchEvent(new CustomEvent('newAnalysisComplete'));
-      } else {
-        throw new Error(responseData?.error || 'Analysis failed');
+      const responseData = response?.data ?? response;
+
+      if (response?.status >= 200 && response?.status < 300 && responseData?.success !== false) {
+        const atsScore = responseData.ats_score;
+        const remaining = Math.max(0, MIN_LOADING_TIME - (Date.now() - startTime));
+        setTimeout(() => {
+          setResult({
+            ...responseData,
+            ats_score: responseData.ats_score
+          });
+          localStorage.setItem('hasNewAnalysis', 'true');
+          localStorage.setItem('analysisScore', String(atsScore ?? 0));
+          window.dispatchEvent(new CustomEvent('newAnalysisComplete'));
+          setUploading(false);
+          setAnalyzingStep('');
+          setIsSubmitting(false);
+        }, remaining);
+        return;
       }
-    } catch (error) {
+
+      throw new Error(responseData?.error || 'Analysis failed');
+    } catch (err) {
       clearInterval(stepInterval);
-      console.error('Upload error details:', error);
-      
-      // Handle different error formats
+      console.error('Upload error details:', err);
       let errorMessage = 'Analysis failed. Please try again.';
-      
-      if (error?.response?.data) {
-        // Axios error with response data
-        const errorData = error.response.data;
+      if (err?.response?.data) {
+        const errorData = err.response.data;
         errorMessage = errorData?.error || errorData?.message || errorMessage;
-      } else if (error?.error) {
-        // Error object with error property
-        errorMessage = error.error;
-      } else if (error?.message) {
-        // Standard error message
-        errorMessage = error.message;
+      } else if (err?.error) {
+        errorMessage = err.error;
+      } else if (err?.message) {
+        errorMessage = err.message;
       }
-      
       setError(errorMessage);
-    } finally {
       setUploading(false);
       setAnalyzingStep('');
+      setIsSubmitting(false);
     }
   };
 
@@ -197,6 +195,20 @@ const Upload = () => {
             className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 mb-8 shadow-lg border border-white/20 dark:border-charcoal-700/50"
           >
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 font-heading">Upload Your Resume File</h2>
+
+            <div className="mb-6">
+              <label htmlFor="job-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Job description (optional)
+              </label>
+              <textarea
+                id="job-description"
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Paste the job description here for a tailored match score and skill gap analysis. Leave blank to match against role templates (Frontend, Backend, Full Stack, etc.)."
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-charcoal-600 bg-white dark:bg-charcoal-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y"
+              />
+            </div>
             
             <div
               onDragEnter={handleDrag}
@@ -311,11 +323,11 @@ const Upload = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={!(isSubmitting || uploading) ? { scale: 1.02 } : {}}
+                whileTap={!(isSubmitting || uploading) ? { scale: 0.98 } : {}}
                 onClick={handleUpload}
-                disabled={uploading}
-                className="mt-6 w-full py-4 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+                disabled={uploading || isSubmitting}
+                className="mt-6 w-full py-4 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold text-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Zap className="w-5 h-5" />
                 Analyze My Resume
@@ -356,28 +368,59 @@ const Upload = () => {
                         strokeWidth="8"
                         fill="transparent"
                         strokeDasharray={`${2 * Math.PI * 45}`}
-                        strokeDashoffset={`${2 * Math.PI * 45 * (1 - result.score / 100)}`}
+                        strokeDashoffset={`${2 * Math.PI * 45 * (1 - (result.ats_score ?? 0) / 100)}`}
                         strokeLinecap="round"
-                        className={`text-gradient-to-r ${getScoreColor(result.score)}`}
+                        className={`text-gradient-to-r ${getScoreColor(result.ats_score ?? 0)}`}
                         style={{
-                          stroke: result.score >= 80 ? '#22c55e' : result.score >= 60 ? '#eab308' : '#ef4444'
+                          stroke: (result.ats_score ?? 0) >= 80 ? '#22c55e' : (result.ats_score ?? 0) >= 60 ? '#eab308' : '#ef4444'
                         }}
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div>
-                        <div className={`text-4xl font-bold font-mono ${getScoreTextColor(result.score)}`}>
-                          {result.score}%
+                        <div className="flex items-center justify-center gap-2">
+                          <span className={`text-4xl font-bold font-mono ${getScoreTextColor(result.ats_score ?? 0)}`}>
+                            {result.ats_score ?? 0}%
+                          </span>
+                          {result.aiUsed && (
+                            <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-700">
+                              AI Analyzed
+                            </span>
+                          )}
+                        {import.meta.env.DEV && result.scoreSource && (
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400" title="scoreSource">
+                            [{result.scoreSource}]
+                          </span>
+                        )}
                         </div>
                         <div className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                          {getScoreText(result.score)}
+                          {getScoreText(result.ats_score ?? 0)}
                         </div>
                       </div>
                     </div>
                   </motion.div>
                 </div>
 
-                {/* Feedback */}
+                {/* Best-fit role & match % when AI used */}
+                {result.bestFitRole != null && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.25 }}
+                    className="flex flex-wrap gap-4 justify-center text-sm"
+                  >
+                    <span className="px-4 py-2 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium">
+                      Best-fit role: {result.bestFitRole}
+                    </span>
+                    {result.jobMatchPercentage != null && (
+                      <span className="px-4 py-2 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 font-medium">
+                        Job match: {result.jobMatchPercentage}%
+                      </span>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Feedback / AI explanation - always render */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -388,36 +431,68 @@ const Upload = () => {
                     <Target className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mt-1 flex-shrink-0" />
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                        Analysis Feedback
+                        {result.aiUsed ? 'AI Analysis' : 'Analysis Feedback'}
                       </h3>
                       <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
-                        {result.feedback}
+                        {result.aiUsed
+                          ? (result.aiExplanation ?? result.ai_explanation ?? result.feedback ?? 'AI analysis completed successfully.')
+                          : (result.feedback ?? 'AI analysis completed successfully.')}
                       </p>
                     </div>
                   </div>
                 </motion.div>
 
+                {/* Skill gaps - always render, with fallback */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.35 }}
+                  className="glass bg-white/50 dark:bg-charcoal-700/50 backdrop-blur-sm rounded-2xl p-6 border border-white/30 dark:border-charcoal-600/50"
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Suggested skills to add</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(result.skillGaps ?? result.skill_gaps ?? []).length > 0
+                      ? (result.skillGaps ?? result.skill_gaps).map((s, i) => (
+                          <span key={i} className="px-3 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-sm">
+                            {s}
+                          </span>
+                        ))
+                      : <span className="text-gray-600 dark:text-gray-400 text-sm">No specific skill gaps identified. Keep building relevant experience.</span>}
+                  </div>
+                </motion.div>
+
                 {/* Action Buttons */}
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
                       setFile(null);
                       setResult(null);
+                      setJobDescription('');
                       if (fileInputRef.current) {
                         fileInputRef.current.value = '';
                       }
                     }}
-                    className="flex-1 py-3 bg-gray-200 dark:bg-charcoal-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-charcoal-600 transition-colors"
+                    className="flex-1 min-w-[140px] py-3 bg-gray-200 dark:bg-charcoal-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-300 dark:hover:bg-charcoal-600 transition-colors"
                   >
                     Analyze Another Resume
                   </motion.button>
+                  {result.resumeId && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate(`/resume-result/${result.resumeId}`)}
+                      className="flex-1 min-w-[140px] py-3 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 rounded-xl font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-900/60 transition-colors"
+                    >
+                      View Full Report
+                    </motion.button>
+                  )}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/dashboard')}
-                    className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+                    className="flex-1 min-w-[140px] py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
                   >
                     View Dashboard
                   </motion.button>

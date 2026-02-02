@@ -112,6 +112,12 @@ export const getResumes = async (req, res) => {
       upload_date: resume.createdAt,
       status: resume.status,
       ats_score: resume.atsScore,
+      score_source: resume.aiUsed ? 'ai' : 'keyword',
+      ai_used: !!resume.aiUsed,
+      feedback: resume.feedback,
+      ai_explanation: resume.aiExplanation,
+      best_fit_role: resume.bestFitRole,
+      job_match_percentage: resume.jobMatchPercentage,
       user_id: resume.userId._id
     }));
 
