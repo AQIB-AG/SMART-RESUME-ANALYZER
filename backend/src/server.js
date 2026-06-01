@@ -25,6 +25,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Middleware
 app.use(cors({
@@ -83,14 +84,19 @@ app.use((req, res) => {
 
 // Connect to MongoDB only if MONGO_URI is provided
 if (process.env.MONGO_URI) {
-  connectDB();
+  connectDB().then((connected) => {
+    if (!connected) {
+      console.warn('⚠️ MongoDB connection failed during startup. The server will continue running and may recover automatically.');
+    }
+  }).catch((dbError) => {
+    console.error('❌ Unexpected MongoDB startup error:', dbError);
+  });
 } else {
   console.log('⚠️ MongoDB not connected (running in mock mode)');
 }
 
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
   console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 

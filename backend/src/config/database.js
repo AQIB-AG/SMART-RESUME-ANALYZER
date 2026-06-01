@@ -7,10 +7,12 @@ const connectDB = async () => {
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     console.log(`✅ Database: ${conn.connection.name}`);
     console.log(`✅ Connection State: ${conn.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
+    return true;
   } catch (error) {
     console.error(`❌ MongoDB connection error: ${error.message}`);
-    console.error(`❌ Error details:`, error);
-    process.exit(1);
+    console.error('❌ Error details:', error);
+    console.warn('⚠️ The app will continue running, but database-dependent routes may fail until MongoDB becomes available.');
+    return false;
   }
 };
 
