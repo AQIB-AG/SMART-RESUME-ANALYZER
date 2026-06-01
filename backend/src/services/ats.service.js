@@ -45,47 +45,98 @@ const extractTextFromPdf = async (file) => {
     }
 
     // Parse PDF using pdf-parse
-    const data = await pdfParse(dataBuffer);
+    let data;
+    const fileName = file.originalname || file.filename || 'unknown';
+    const fileSize = typeof file.size === 'number' ? `${file.size} bytes` : 'unknown';
+
+    try {
+      data = await pdfParse(dataBuffer);
+    } catch (parserError) {
+      const firstErrorMessage = parserError?.message || String(parserError);
+      console.warn('PDF parse failed on first attempt:', {
+        fileName,
+        fileSize,
+        parserError: firstErrorMessage
+      });
+
+      try {
+        data = await pdfParse(dataBuffer, { version: 'v2.0.550' });
+      } catch (fallbackError) {
+        const fallbackMessage = fallbackError?.message || String(fallbackError);
+        console.error('PDF parse fallback failed:', {
+          fileName,
+          fileSize,
+          originalParserError: firstErrorMessage,
+          fallbackParserError: fallbackMessage
+        });
+
+        const userError = new Error(`Unable to parse PDF. Original parser error: ${firstErrorMessage}`);
+        userError.statusCode = 400;
+        throw userError;
+      }
+    }
 
     // Validate parsing result
     if (!data) {
-      throw new Error('PDF parsing returned no data');
+      const userError = new Error('PDF parsing returned no data');
+      userError.statusCode = 400;
+      throw userError;
     }
 
     if (!data.text || typeof data.text !== 'string') {
-      throw new Error('PDF parsing returned no extractable text');
+      const userError = new Error('PDF parsing returned no extractable text. It may be image-based or use a non-text PDF format.');
+      userError.statusCode = 400;
+      throw userError;
     }
 
     // Check if text is empty or just whitespace
     const extractedText = data.text.trim();
     if (extractedText.length === 0) {
-      throw new Error('PDF contains no extractable text (may be image-based or corrupted)');
+      const userError = new Error('The PDF contains no extractable text. It may be image-based or scanned. Please upload a text-based PDF.');
+      userError.statusCode = 400;
+      throw userError;
     }
 
     return extractedText;
   } catch (error) {
-    // Provide user-friendly error messages
     const errorMessage = error.message || 'Unknown error';
-    
-    if (errorMessage.includes('Invalid PDF') || errorMessage.includes('corrupted') || errorMessage.includes('not a valid PDF')) {
-      throw new Error('The uploaded file is not a valid PDF or appears to be corrupted. Please upload a valid PDF file.');
-    }
-    
+    const fileName = file?.originalname || file?.filename || 'unknown';
+    const fileSize = typeof file?.size === 'number' ? `${file.size} bytes` : 'unknown';
+
+    console.error('PDF extraction error:', {
+      fileName,
+      fileSize,
+      errorMessage,
+      stack: error.stack
+    });
+
     if (errorMessage.includes('password') || errorMessage.includes('encrypted')) {
-      throw new Error('The PDF is password-protected and cannot be analyzed. Please remove the password and try again.');
+      const userError = new Error('The PDF is password-protected and cannot be analyzed. Please remove the password and try again.');
+      userError.statusCode = 400;
+      throw userError;
     }
-    
+
     if (errorMessage.includes('no extractable text')) {
-      throw new Error('The PDF contains no extractable text. It may be image-based. Please use a text-based PDF.');
+      const userError = new Error('The PDF contains no extractable text. It may be image-based or scanned. Please upload a text-based PDF.');
+      userError.statusCode = 400;
+      throw userError;
     }
-    
-    // Re-throw with context if it's already a formatted error
-    if (errorMessage.includes('The uploaded file') || errorMessage.includes('The PDF is')) {
-      throw error;
+
+    if (errorMessage.includes('The uploaded file is not a valid PDF') || errorMessage.includes('not a valid PDF') || errorMessage.includes('corrupted') || errorMessage.includes('Invalid PDF')) {
+      const userError = new Error('The uploaded file cannot be parsed as a standard PDF. Please upload a valid PDF file.');
+      userError.statusCode = 400;
+      throw userError;
     }
-    
-    // Generic error with original message
-    throw new Error(`Failed to extract text from PDF: ${errorMessage}`);
+
+    if (errorMessage.includes('Unable to parse PDF. Original parser error:')) {
+      const userError = new Error(errorMessage);
+      userError.statusCode = 400;
+      throw userError;
+    }
+
+    const wrappedError = new Error(`Failed to extract text from PDF: ${errorMessage}`);
+    wrappedError.statusCode = error.statusCode || 500;
+    throw wrappedError;
   }
 };
 

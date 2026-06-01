@@ -36,8 +36,15 @@ export const analyzeResumeForATS = async (req, res) => {
     try {
       resumeText = await extractTextFromPdf(req.file);
     } catch (error) {
-      console.error('PDF extraction error:', error);
-      return res.status(500).json({
+      console.error('PDF extraction error:', {
+        fileName: originalFileName,
+        fileSize,
+        message: error.message,
+        stack: error.stack
+      });
+
+      const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
+      return res.status(statusCode).json({
         success: false,
         error: error.message || 'Failed to extract text from PDF'
       });

@@ -1,5 +1,5 @@
 
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = 'https://smart-resume-analyzer-1-oxdm.onrender.com';
 
 async function testAuth() {
   console.log('Testing Auth API...');
