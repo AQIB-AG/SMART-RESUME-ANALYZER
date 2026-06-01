@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = `${API_URL}/api`;
 
 // Create axios instance
 const api = axios.create({
@@ -50,11 +51,9 @@ export const authAPI = {
 // Resume API
 export const resumeAPI = {
   upload: (formData) => {
-    const token = localStorage.getItem('token');
-    return axios.post(`${API_BASE_URL}/resumes`, formData, {
+    return api.post('/resumes', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`,
       },
     });
   },
@@ -71,11 +70,9 @@ export const analysisAPI = {
   skillGap: (resumeId, jobId) => api.get(`/analysis/skill-gap/${resumeId}/${jobId}`),
   getSummary: (resumeId) => api.get(`/analysis/summary/${resumeId}`),
   analyzeResume: (formData) => {
-    const token = localStorage.getItem('token');
-    return axios.post(`${API_BASE_URL}/analyzeResume`, formData, {
+    return api.post('/analyzeResume', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`,
       },
     });
   },
