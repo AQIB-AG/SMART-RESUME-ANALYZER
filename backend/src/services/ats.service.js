@@ -1,9 +1,10 @@
-// Import pdf-parse - ES module that exports PDFParse class
-import { PDFParse } from 'pdf-parse';
+// Import multi-stage PDF extraction service
+import { extractText as extractPdfText } from './pdfExtractor.service.js';
 import fs from 'fs/promises';
 
 /**
- * Extract text from PDF file
+ * Extract text from PDF file using multi-stage extraction pipeline
+ * Tries: pdf-parse -> pdfjs-dist -> tesseract OCR
  * @param {Object} file - Multer file object with either .path (diskStorage) or .buffer (memoryStorage)
  * @returns {Promise<string>} Extracted text from PDF
  */
@@ -41,90 +42,19 @@ const extractTextFromPdf = async (file) => {
       throw new Error('File buffer is empty');
     }
 
-    // Parse PDF using pdf-parse
     const fileName = file.originalname || file.filename || 'unknown';
-    const fileSize = typeof file.size === 'number' ? `${file.size} bytes` : 'unknown';
+    const fileSize = file.size || dataBuffer.length;
 
-    // DIAGNOSTIC: Log file and buffer info before parsing
-    console.log('[PDF_EXTRACT_DIAG] Before parsing:', {
-      fileName,
-      fileSize,
-      bufferLength: dataBuffer.length,
-      bufferType: dataBuffer.constructor.name,
-      timestamp: new Date().toISOString()
-    });
+    // Use multi-stage extraction pipeline
+    const extractionResult = await extractPdfText(dataBuffer, fileName, fileSize);
 
-    try {
-      // Create parser instance with the buffer
-      const parser = new PDFParse({ data: dataBuffer });
-      
-      // Extract text and metadata
-      const textResult = await parser.getText();
-      const infoResult = await parser.getInfo();
-      
-      // Clean up parser resources
-      await parser.destroy();
-      
-      // Format results to match old API for compatibility
-      const data = {
-        text: textResult.text,
-        numpages: textResult.total,
-        info: infoResult.info,
-        metadata: infoResult.metadata
-      };
-      
-      // Validate extracted text
-      const extractedText = String(data.text).trim();
-      const extractedLength = extractedText.length;
-
-      // DIAGNOSTIC: Log extraction results after parsing
-      console.log('[PDF_EXTRACT_DIAG] After parsing:', {
-        fileName,
-        fileSize,
-        pages: data.numpages,
-        rawTextLength: data.text.length,
-        extractedLength,
-        first500chars: extractedText.substring(0, 500),
-        info: data.info ? JSON.stringify(data.info).substring(0, 200) : null,
-        metadata: data.metadata ? JSON.stringify(data.metadata).substring(0, 200) : null,
-        timestamp: new Date().toISOString()
-      });
-
-      console.info('PDF parse diagnostics', { fileName, fileSize, pages: data.numpages, extractedLength, preview: extractedText.length > 0 ? extractedText.substring(0, 100) : null, info: data.info, metadata: data.metadata });
-
-      // If text length is zero, check if PDF has pages but no extractable text
-      if (extractedLength === 0 && data.numpages && data.numpages > 0) {
-        const userError = new Error('The PDF contains no extractable text. It may be image-based or scanned. Please upload a text-based PDF.');
-        userError.statusCode = 400;
-        throw userError;
-      }
-
-      if (extractedLength === 0) {
-        const userError = new Error('The PDF contains no extractable text.');
-        userError.statusCode = 400;
-        throw userError;
-      }
-
-      // Return extracted text if non-empty
-      return extractedText;
-    } catch (parserError) {
-      const firstErrorMessage = parserError?.message || String(parserError);
-      console.error('PDF parse failed:', {
-        fileName,
-        fileSize,
-        parserError: firstErrorMessage,
-        stack: parserError?.stack
-      });
-
-      // If already a user error, re-throw it
-      if (parserError?.statusCode === 400) {
-        throw parserError;
-      }
-
-      const userError = new Error(`Unable to parse PDF: ${firstErrorMessage}`);
+    if (!extractionResult.success) {
+      const userError = new Error(extractionResult.error || 'Unable to extract text from PDF');
       userError.statusCode = 400;
       throw userError;
     }
+
+    return extractionResult.text;
   } catch (error) {
     const errorMessage = error.message || 'Unknown error';
     const fileName = file?.originalname || file?.filename || 'unknown';
@@ -149,14 +79,8 @@ const extractTextFromPdf = async (file) => {
       throw userError;
     }
 
-    if (errorMessage.includes('The uploaded file is not a valid PDF') || errorMessage.includes('not a valid PDF') || errorMessage.includes('corrupted') || errorMessage.includes('Invalid PDF')) {
+    if (errorMessage.includes('not a valid PDF') || errorMessage.includes('corrupted') || errorMessage.includes('Invalid PDF')) {
       const userError = new Error('The uploaded file cannot be parsed as a standard PDF. Please upload a valid PDF file.');
-      userError.statusCode = 400;
-      throw userError;
-    }
-
-    if (errorMessage.includes('Unable to parse PDF. Original parser error:')) {
-      const userError = new Error(errorMessage);
       userError.statusCode = 400;
       throw userError;
     }
