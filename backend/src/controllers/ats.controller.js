@@ -35,11 +35,18 @@ export const analyzeResumeForATS = async (req, res) => {
     let resumeText;
     let extractionMethod = 'unknown';
     let extractionMetadata = null;
+    let pagesProcessed = 0;
+    let ocrUsed = false;
+    let processingTime = null;
+
     try {
       const extractionResult = await extractTextFromPdf(req.file);
       resumeText = extractionResult.text;
       extractionMethod = extractionResult.method || 'unknown';
       extractionMetadata = extractionResult.metadata || null;
+      pagesProcessed = extractionResult.pagesProcessed || 0;
+      ocrUsed = extractionResult.ocrUsed || false;
+      processingTime = extractionResult.processingTime || null;
     } catch (error) {
       console.error('PDF extraction error:', {
         fileName: originalFileName,
@@ -172,7 +179,9 @@ export const analyzeResumeForATS = async (req, res) => {
       resumeId: savedResume._id.toString(),
       text: resumeText,
       method: extractionMethod,
-      processingTime: extractionMetadata?.totalDuration || null,
+      pagesProcessed,
+      ocrUsed,
+      processingTime,
       skills,
       missingKeywords: keywordResult.missingKeywords,
       suggestions: keywordResult.suggestions,

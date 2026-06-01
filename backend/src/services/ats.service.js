@@ -1,5 +1,4 @@
-import { promises as fs } from 'fs';
-import { extractText as extractPdfText } from './pdf.service.js';
+import { extractTextFromPdf as extractPdfText } from './pdf.service.js';
 
 const TECHNICAL_KEYWORDS = [
   'javascript', 'typescript', 'python', 'java', 'c++', 'c#', 'node.js', 'nodejs',
@@ -28,32 +27,8 @@ const DEGREE_KEYWORDS = [
   'university', 'college', 'school', 'graduated', 'graduation'
 ];
 
-const extractBufferFromFile = async (file) => {
-  if (!file) {
-    throw new Error('No file provided for ATS analysis');
-  }
-
-  if (file.buffer && Buffer.isBuffer(file.buffer)) {
-    return file.buffer;
-  }
-
-  if (file.path && typeof file.path === 'string') {
-    try {
-      return await fs.readFile(file.path);
-    } catch (readError) {
-      throw new Error(`Failed to read file from path: ${readError.message}`);
-    }
-  }
-
-  throw new Error('Multer file must provide either .buffer or .path.');
-};
-
 export const extractTextFromPdf = async (file) => {
-  const fileName = file?.originalname || file?.filename || 'unknown.pdf';
-  const fileSize = typeof file?.size === 'number' ? file.size : 0;
-  const buffer = await extractBufferFromFile(file);
-
-  const extractionResult = await extractPdfText(buffer, fileName, fileSize);
+  const extractionResult = await extractPdfText(file);
 
   if (!extractionResult.success) {
     const error = new Error(extractionResult.error || 'Unable to extract text from PDF');
@@ -63,7 +38,10 @@ export const extractTextFromPdf = async (file) => {
 
   return {
     text: extractionResult.text,
-    method: extractionResult.metadata?.parser || 'unknown',
+    method: extractionResult.method || 'unknown',
+    pagesProcessed: extractionResult.pagesProcessed || 0,
+    ocrUsed: extractionResult.ocrUsed || false,
+    processingTime: extractionResult.processingTime || null,
     metadata: extractionResult.metadata
   };
 };
