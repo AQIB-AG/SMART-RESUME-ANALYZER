@@ -33,8 +33,13 @@ export const analyzeResumeForATS = async (req, res) => {
 
     // Extract text from PDF
     let resumeText;
+    let extractionMethod = 'unknown';
+    let extractionMetadata = null;
     try {
-      resumeText = await extractTextFromPdf(req.file);
+      const extractionResult = await extractTextFromPdf(req.file);
+      resumeText = extractionResult.text;
+      extractionMethod = extractionResult.method || 'unknown';
+      extractionMetadata = extractionResult.metadata || null;
     } catch (error) {
       console.error('PDF extraction error:', {
         fileName: originalFileName,
@@ -51,10 +56,10 @@ export const analyzeResumeForATS = async (req, res) => {
     }
 
     // Always run keyword-based ATS (fallback baseline)
-    const keywordResult = performAtsAnalysis(resumeText);
+    const keywordResult = performAtsAnalysis(resumeText, jobDescription);
     const keywordScore = keywordResult.atsScore;
     const keywordFeedback = keywordResult.feedback;
-    const skills = keywordResult.details.matchedTechnical.concat(keywordResult.details.matchedSoft);
+    const skills = keywordResult.skills;
 
     let finalScore;
     let finalFeedback;
@@ -162,15 +167,21 @@ export const analyzeResumeForATS = async (req, res) => {
     const responsePayload = {
       success: true,
       score: finalScore,
+      atsScore: finalScore,
       feedback: finalFeedback,
       resumeId: savedResume._id.toString(),
+      text: resumeText,
+      method: extractionMethod,
+      processingTime: extractionMetadata?.totalDuration || null,
+      skills,
+      missingKeywords: keywordResult.missingKeywords,
+      suggestions: keywordResult.suggestions,
       bestFitRole: aiResult.bestFitRole,
       jobMatchPercentage: aiResult.jobMatchPercentage,
       skillGaps: aiResult.skillGaps,
       strengthAreas: aiResult.strengthAreas,
       aiExplanation: aiResult.aiExplanation,
       aiUsed: !!aiResult.aiUsed,
-      ats_score: finalScore,
       scoreSource,
       ai_explanation: finalFeedback,
       best_fit_role: aiResult.bestFitRole,
