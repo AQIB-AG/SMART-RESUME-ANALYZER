@@ -49,54 +49,69 @@ const extractTextFromPdf = async (file) => {
     const fileName = file.originalname || file.filename || 'unknown';
     const fileSize = typeof file.size === 'number' ? `${file.size} bytes` : 'unknown';
 
+    // DIAGNOSTIC: Log file and buffer info before parsing
+    console.log('[PDF_EXTRACT_DIAG] Before parsing:', {
+      fileName,
+      fileSize,
+      bufferLength: dataBuffer.length,
+      bufferType: dataBuffer.constructor.name,
+      timestamp: new Date().toISOString()
+    });
+
     try {
       data = await pdfParse(dataBuffer);
     } catch (parserError) {
       const firstErrorMessage = parserError?.message || String(parserError);
-      console.warn('PDF parse failed on first attempt:', {
+      console.error('PDF parse failed:', {
         fileName,
         fileSize,
         parserError: firstErrorMessage
       });
 
-      try {
-        data = await pdfParse(dataBuffer, { version: 'v2.0.550' });
-      } catch (fallbackError) {
-        const fallbackMessage = fallbackError?.message || String(fallbackError);
-        console.error('PDF parse fallback failed:', {
-          fileName,
-          fileSize,
-          originalParserError: firstErrorMessage,
-          fallbackParserError: fallbackMessage
-        });
-
-        const userError = new Error(`Unable to parse PDF. Original parser error: ${firstErrorMessage}`);
-        userError.statusCode = 400;
-        throw userError;
-      }
-    }
-
-    // Validate parsing result
-    if (!data) {
-      const userError = new Error('PDF parsing returned no data');
+      const userError = new Error(`Unable to parse PDF: ${firstErrorMessage}`);
       userError.statusCode = 400;
       throw userError;
     }
 
-    if (!data.text || typeof data.text !== 'string') {
-      const userError = new Error('PDF parsing returned no extractable text. It may be image-based or use a non-text PDF format.');
-      userError.statusCode = 400;
-      throw userError;
-    }
+    // Validate parsing result and collect diagnostics
+    const pages = data.numpages ?? data.numPages ?? null;
+    const info = data.info ?? null;
+    const metadata = data.metadata ?? null;
+    const rawText = (data.text && typeof data.text === 'string') ? data.text : (data.text || '');
+    const extractedText = String(rawText).trim();
 
-    // Check if text is empty or just whitespace
-    const extractedText = data.text.trim();
-    if (extractedText.length === 0) {
+    const extractedLength = extractedText.length;
+    const preview = extractedText.substring(0, 1000);
+
+    // DIAGNOSTIC: Log extraction results after parsing
+    console.log('[PDF_EXTRACT_DIAG] After parsing:', {
+      fileName,
+      fileSize,
+      pages,
+      rawTextLength: rawText.length,
+      extractedLength,
+      first500chars: extractedText.substring(0, 500),
+      info: info ? JSON.stringify(info).substring(0, 200) : null,
+      metadata: metadata ? JSON.stringify(metadata).substring(0, 200) : null,
+      timestamp: new Date().toISOString()
+    });
+
+    console.info('PDF parse diagnostics', { fileName, fileSize, pages, extractedLength, preview: preview.length > 0 ? preview : null, info, metadata });
+
+    // If text length is zero, check if PDF has pages but no extractable text
+    if (extractedLength === 0 && pages && pages > 0) {
       const userError = new Error('The PDF contains no extractable text. It may be image-based or scanned. Please upload a text-based PDF.');
       userError.statusCode = 400;
       throw userError;
     }
 
+    if (extractedLength === 0) {
+      const userError = new Error('The PDF contains no extractable text.');
+      userError.statusCode = 400;
+      throw userError;
+    }
+
+    // Return extracted text if non-empty
     return extractedText;
   } catch (error) {
     const errorMessage = error.message || 'Unknown error';
