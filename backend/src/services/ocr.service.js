@@ -15,7 +15,7 @@ const preprocessImage = async (imagePath) => {
 };
 
 const createTesseractWorker = async () => {
-  const worker = createWorker();
+  const worker = await createWorker();
   await worker.load();
   await worker.loadLanguage('eng');
   await worker.initialize('eng');

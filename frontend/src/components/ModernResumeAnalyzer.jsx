@@ -155,23 +155,15 @@ const ModernResumeAnalyzer = () => {
       const formData = new FormData();
       formData.append('resume', file);
 
-      // analyzeResume uses axios directly, so response structure is { data: {...}, status, ... }
       const response = await analysisAPI.analyzeResume(formData);
 
       clearInterval(stepInterval);
 
-      // Extract data from axios response
       const responseData = response?.data || response;
 
-      // Check if request was successful (status 200-299)
-      if (response?.status >= 200 && response?.status < 300) {
-        // Success case - response has score and feedback
-        if (responseData?.success === false) {
-          throw new Error(responseData?.error || 'Analysis failed');
-        }
-        
+      if (responseData?.success !== false) {
         setResult({
-          score: responseData?.score || responseData?.atsScore || 75,
+          score: responseData?.score ?? responseData?.atsScore ?? responseData?.ats_score ?? 75,
           feedback: responseData?.feedback || 'Your resume has been analyzed successfully. Consider adding more relevant keywords and quantifiable achievements to improve your ATS score.'
         });
       } else {

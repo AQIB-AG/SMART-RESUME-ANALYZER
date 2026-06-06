@@ -104,13 +104,13 @@ const Upload = () => {
       clearInterval(stepInterval);
       const responseData = response?.data ?? response;
 
-      if (response?.status >= 200 && response?.status < 300 && responseData?.success !== false) {
-        const atsScore = responseData.ats_score;
+      if (responseData?.success !== false) {
+        const atsScore = responseData.ats_score ?? responseData.atsScore ?? responseData.score ?? 0;
         const remaining = Math.max(0, MIN_LOADING_TIME - (Date.now() - startTime));
         setTimeout(() => {
           setResult({
             ...responseData,
-            ats_score: responseData.ats_score
+            ats_score: atsScore
           });
           localStorage.setItem('hasNewAnalysis', 'true');
           localStorage.setItem('analysisScore', String(atsScore ?? 0));
