@@ -1,5 +1,5 @@
 ﻿import { createWorker } from 'tesseract.js';
-import * as Jimp from 'jimp';
+import { Jimp } from 'jimp';
 
 const DEFAULT_PSM = 6;
 const DEFAULT_TIMEOUT_MS = 28000;
@@ -8,17 +8,14 @@ const MAX_IMAGE_WIDTH = 1600;
 const preprocessImage = async (imagePath) => {
   const image = await Jimp.read(imagePath);
   if (image.bitmap.width > MAX_IMAGE_WIDTH) {
-    image.resize(MAX_IMAGE_WIDTH, Jimp.AUTO);
+    image.resize({ w: MAX_IMAGE_WIDTH });
   }
   image.greyscale().contrast(0.15).normalize();
-  return image.getBufferAsync(Jimp.MIME_PNG);
+  return image.getBuffer('image/png');
 };
 
 const createTesseractWorker = async () => {
-  const worker = await createWorker();
-  await worker.load();
-  await worker.loadLanguage('eng');
-  await worker.initialize('eng');
+  const worker = await createWorker('eng');
   await worker.setParameters({
     tessedit_pageseg_mode: String(DEFAULT_PSM),
     tessedit_ocr_engine_mode: '1',
