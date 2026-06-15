@@ -61,6 +61,8 @@ export const resumeAPI = {
   getOne: (id) => api.get(`/resumes/${id}`),
   update: (id, data) => api.put(`/resumes/${id}`, data),
   delete: (id) => api.delete(`/resumes/${id}`),
+  generateCoverLetter: (id, data) => api.post(`/resumes/${id}/cover-letter`, data),
+  generateInterviewQuestions: (id, data) => api.post(`/resumes/${id}/interview-questions`, data),
 };
 
 // Analysis API

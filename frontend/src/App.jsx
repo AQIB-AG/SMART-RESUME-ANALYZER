@@ -18,6 +18,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import ResumeResult from './pages/ResumeResult';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import CoverLetterPage from './pages/CoverLetterPage';
+import MockInterviewPage from './pages/MockInterviewPage';
 
 function App() {
   return (
@@ -50,6 +52,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Upload />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cover-letter"
+              element={
+                <ProtectedRoute>
+                  <CoverLetterPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mock-interview"
+              element={
+                <ProtectedRoute>
+                  <MockInterviewPage />
                 </ProtectedRoute>
               }
             />

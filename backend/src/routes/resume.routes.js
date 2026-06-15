@@ -7,6 +7,10 @@ import {
   deleteResume,
   upload
 } from '../controllers/resume.controller.js';
+import {
+  handleGenerateCoverLetter,
+  handleGenerateInterviewQuestions
+} from '../controllers/ai-generator.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -20,5 +24,10 @@ router.get('/:id', getResume);
 router.put('/:id', updateResume);
 router.delete('/:id', deleteResume);
 
+// AI Generator Routes
+router.post('/:id/cover-letter', handleGenerateCoverLetter);
+router.post('/:id/interview-questions', handleGenerateInterviewQuestions);
+
 export default router;
+
 

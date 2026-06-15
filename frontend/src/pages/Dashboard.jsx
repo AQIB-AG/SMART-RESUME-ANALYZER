@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { resumeAPI } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
-import { Upload, RefreshCw, Clock, ArrowRight, TrendingUp, Target, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, RefreshCw, Clock, ArrowRight, TrendingUp, Target, CheckCircle, AlertCircle, FileText, Mic } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -213,6 +213,28 @@ const Dashboard = () => {
                 <span className="text-sm opacity-80 mt-1">Identify missing skills</span>
               </motion.button>
               
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/cover-letter')}
+                className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 group"
+              >
+                <FileText className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
+                <span className="font-semibold text-lg">Cover Letter</span>
+                <span className="text-sm opacity-80 mt-1">Generate ATS-friendly cover letters</span>
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/mock-interview')}
+                className="flex flex-col items-center justify-center p-6 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl hover:shadow-xl transition-all duration-300 group"
+              >
+                <Mic className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
+                <span className="font-semibold text-lg">Mock Interview</span>
+                <span className="text-sm opacity-80 mt-1">Generate resume-based questions</span>
+              </motion.button>
+
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

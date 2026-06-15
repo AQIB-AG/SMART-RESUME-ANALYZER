@@ -9,6 +9,9 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => 
+    typeof window !== 'undefined' && localStorage.getItem('sidebarCollapsed') === 'true'
+  );
   const [hasNewAnalysis, setHasNewAnalysis] = useState(() =>
     typeof window !== 'undefined' && localStorage.getItem('hasNewAnalysis') === 'true'
   );
@@ -17,6 +20,14 @@ const Layout = ({ children }) => {
   const navigate = useNavigate();
   const userMenuRef = useRef(null);
   const notificationsRef = useRef(null);
+
+  const toggleSidebarCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('sidebarCollapsed', String(next));
+      return next;
+    });
+  };
 
   const handleBellClick = () => {
     // Reset new analysis flag (this allows new analyses to trigger notifications again)
@@ -65,9 +76,9 @@ const Layout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-charcoal-900">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isCollapsed={isCollapsed} />
       
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
+      <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         {/* Top Header */}
         <header className="bg-white dark:bg-charcoal-800 border-b border-gray-200 dark:border-charcoal-700 px-4 py-3 flex items-center justify-between">
           <button
@@ -75,6 +86,14 @@ const Layout = ({ children }) => {
             className="lg:hidden text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
             <Menu className="w-6 h-6" />
+          </button>
+          
+          <button
+            onClick={toggleSidebarCollapse}
+            className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 text-gray-600 dark:text-gray-300 transition-colors mr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Menu className="w-5 h-5" />
           </button>
           
           <div className="flex-1" />
