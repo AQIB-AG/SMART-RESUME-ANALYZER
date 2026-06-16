@@ -63,6 +63,8 @@ export const resumeAPI = {
   delete: (id) => api.delete(`/resumes/${id}`),
   generateCoverLetter: (id, data) => api.post(`/resumes/${id}/cover-letter`, data),
   generateInterviewQuestions: (id, data) => api.post(`/resumes/${id}/interview-questions`, data),
+  generateCoverLetterStandalone: (data) => api.post('/resumes/standalone/cover-letter', data),
+  generateInterviewQuestionsStandalone: (data) => api.post('/resumes/standalone/interview-questions', data),
 };
 
 // Analysis API

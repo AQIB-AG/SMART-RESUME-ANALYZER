@@ -40,18 +40,23 @@ async function callHuggingFace(prompt, parameters = {}) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'X-Use-Cache': 'false',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
         body: JSON.stringify({
           inputs: prompt,
           parameters: {
             max_new_tokens: parameters.max_new_tokens || 1000,
-            temperature: parameters.temperature || 0.7,
+            temperature: parameters.temperature || 0.85,
             return_full_text: false,
             ...parameters
           },
           options: {
-            use_cache: false
+            use_cache: false,
+            wait_for_model: true
           }
         }),
         // Add timeout to prevent hanging requests
@@ -126,7 +131,7 @@ export async function generateCoverLetter(resume, options) {
 export async function generateInterviewQuestions(resume, options) {
   console.log("⚙️ AI GENERATOR SERVICE CALL:", { resumeId: resume._id || resume.id, ...options });
   
-  const seed = Math.random().toString(36).substring(2, 10);
+  const seed = `${Math.random().toString(36).substring(2, 10)}-${Date.now()}`;
   const prompt = buildInterviewQuestionsPrompt({ resume, ...options, seed });
   
   console.log("📝 GENERATED FINAL PROMPT:\n" + prompt + "\n=========================================");

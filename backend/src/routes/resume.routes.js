@@ -9,7 +9,9 @@ import {
 } from '../controllers/resume.controller.js';
 import {
   handleGenerateCoverLetter,
-  handleGenerateInterviewQuestions
+  handleGenerateInterviewQuestions,
+  handleGenerateCoverLetterStandalone,
+  handleGenerateInterviewQuestionsStandalone
 } from '../controllers/ai-generator.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 
@@ -20,6 +22,11 @@ router.use(authenticate);
 
 router.post('/', upload.single('resume'), uploadResume);
 router.get('/', getResumes);
+
+// Standalone AI Generator Routes (registered before /:id wildcard)
+router.post('/standalone/cover-letter', handleGenerateCoverLetterStandalone);
+router.post('/standalone/interview-questions', handleGenerateInterviewQuestionsStandalone);
+
 router.get('/:id', getResume);
 router.put('/:id', updateResume);
 router.delete('/:id', deleteResume);

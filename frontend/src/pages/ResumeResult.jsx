@@ -321,11 +321,27 @@ const ResumeResult = () => {
     setIsGeneratingQ(true);
     setQError(null);
     try {
+      const domain = targetRole;
+      const interviewType = intType;
+      const difficulty = intDifficulty;
+      const questionCount = intNumber;
+
+      console.log({
+        domain,
+        interviewType,
+        difficulty,
+        questionCount
+      });
+
       const res = await resumeAPI.generateInterviewQuestions(id, {
-        type: intType,
-        difficulty: intDifficulty,
-        number: intNumber,
-        targetRole: targetRole
+        domain,
+        role: domain,
+        targetRole: domain,
+        interviewType,
+        type: interviewType,
+        difficulty,
+        questionCount,
+        number: questionCount
       });
       if (res?.success && res?.questions) {
         setQuestions(res.questions);

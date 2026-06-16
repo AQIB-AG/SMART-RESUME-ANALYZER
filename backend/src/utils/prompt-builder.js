@@ -116,9 +116,7 @@ export function buildInterviewQuestionsPrompt({ resume, type = 'Technical', diff
     difficultyInstruction = `All questions must be at a 'Medium' level. Focus on practical implementation details, debugging common issues, standard architectural design, and everyday problem solving.`;
   }
 
-  return `You are an expert technical interviewer and HR specialist.
-Analyze the following candidate resume details and generate ${number} interview questions for the target job role '${targetRole || 'Software Professional'}'.
-
+  return `Generate ${number} ${difficulty} ${targetRole || 'Software Professional'} interview questions based on this resume.
 Candidate Name: ${name}
 Skills: ${skillsStr}
 

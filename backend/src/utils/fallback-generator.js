@@ -1488,13 +1488,1114 @@ const TECHNICAL_POOLS = {
         ]
       }
     ]
+  },
+  cybersecurity: {
+    Easy: [
+      {
+        question: "What is the difference between encryption and hashing?",
+        why: "Tests fundamental data protection taxonomy.",
+        expectedAnswer: [
+          "Hashing is a one-way cryptographic function mapping data to a fixed-length signature.",
+          "Encryption is a two-way function allowing recovery of original data via a decryption key.",
+          "Hashing is used for integrity check (e.g. password storage); encryption for confidentiality."
+        ]
+      },
+      {
+        question: "Explain the concept of Multi-Factor Authentication (MFA).",
+        why: "Checks security access controls knowledge.",
+        expectedAnswer: [
+          "Combines multiple independent credentials for verification.",
+          "Categories: Something you know (password), something you have (token), and something you are (biometrics).",
+          "Significantly increases access security beyond simple credentials."
+        ]
+      },
+      {
+        question: "What is phishing, and how can an organization protect itself against it?",
+        why: "Checks threat vector awareness.",
+        expectedAnswer: [
+          "Social engineering attack where malicious actors impersonate legitimate entities via email/communication.",
+          "Aims to trick users into sharing passwords, keys, or executing malware.",
+          "Mitigation: User training, email filtering, and enforcing multi-factor authentication (MFA)."
+        ]
+      },
+      {
+        question: "Explain the purpose of a Firewall in network security.",
+        why: "Checks network traffic isolation fundamentals.",
+        expectedAnswer: [
+          "Monitors and controls incoming/outgoing network traffic based on predefined security rules.",
+          "Acts as a barrier between a trusted secure internal network and untrusted external networks.",
+          "Can filter packets, inspect connections statefully, or work at the application layer."
+        ]
+      },
+      {
+        question: "What is the difference between a vulnerability and a threat?",
+        why: "Checks basic risk management taxonomy.",
+        expectedAnswer: [
+          "A vulnerability is an inherent weakness in a system or software structure.",
+          "A threat is any potential event or actor that can exploit a vulnerability to cause harm.",
+          "Security risk is calculated as the intersection of vulnerabilities, threats, and asset value."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "Explain SQL Injection (SQLi) and how to mitigate it.",
+        why: "Tests application security vulnerabilities and secure coding.",
+        expectedAnswer: [
+          "Vulnerability where untrusted input is concatenated directly into SQL queries.",
+          "Allows attackers to manipulate backend database queries, bypass auth, or modify/steal data.",
+          "Mitigate using parameterized queries, prepared statements, and ORMs."
+        ]
+      },
+      {
+        question: "Describe the OWASP Top 10. Choose one risk and explain its mitigation in detail.",
+        why: "Checks familiarity with web application security standard awareness.",
+        expectedAnswer: [
+          "Standard awareness document representing the most critical security risks for web applications.",
+          "Example: Broken Access Control (users accessing resources outside their permissions).",
+          "Mitigation: Enforce least privilege, deny access by default, and log access failures."
+        ]
+      },
+      {
+        question: "Explain Cross-Site Scripting (XSS) and differentiate between Stored, Reflected, and DOM-based XSS.",
+        why: "Tests script injection vulnerability taxonomy.",
+        expectedAnswer: [
+          "Stored: malicious script is saved on server database and rendered on user screens.",
+          "Reflected: script is reflected off the web server response (e.g. inside URL query parameters).",
+          "DOM-based: vulnerability exists entirely in client-side script updating the page dynamic elements.",
+          "Mitigate via context-aware output encoding, input sanitization, and Content Security Policy (CSP)."
+        ]
+      },
+      {
+        question: "What is a Man-in-the-Middle (MitM) attack, and how does HTTPS prevent it?",
+        why: "Checks secure network transport protocols.",
+        expectedAnswer: [
+          "Attack where communication between two parties is secretly intercepted and possibly altered.",
+          "HTTPS uses TLS/SSL protocols to encrypt the transport channel.",
+          "Verifies server identities using certificates signed by trusted Certificate Authorities (CAs)."
+        ]
+      },
+      {
+        question: "How does a symmetric key cipher differ from an asymmetric key cipher? Give examples of each.",
+        why: "Tests cryptography baseline controls.",
+        expectedAnswer: [
+          "Symmetric uses the same secret key for both encryption and decryption (e.g., AES, DES).",
+          "Asymmetric uses a mathematically linked key pair: Public key for encrypting, Private key for decrypting (e.g., RSA, ECC).",
+          "Symmetric is computationally faster; asymmetric solves secure key exchange problems."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "Design a secure architecture to protect REST APIs against DDoS, credential stuffing, and data scraping.",
+        why: "Tests security architecture design capability.",
+        expectedAnswer: [
+          "Deploy a Web Application Firewall (WAF) to block malicious request patterns and bot traffic.",
+          "Implement rate-limiting (sliding window in Redis) and API rate gates.",
+          "Enforce OAuth 2.0 / JWT authorization controls with short token expirations.",
+          "Use IP reputation databases and challenge mechanisms (CAPTCHA) on auth endpoints."
+        ]
+      },
+      {
+        question: "How would you conduct a security audit on a microservices-based application cluster deployed in Kubernetes?",
+        why: "Tests container network security configurations.",
+        expectedAnswer: [
+          "Audit Kubernetes RBAC configurations to ensure least privilege access controls.",
+          "Enforce Network Policies to restrict pod-to-pod communication paths.",
+          "Scan container images for vulnerability CVEs during build pipelines.",
+          "Use secret managers (HashiCorp Vault) rather than base64 environment files."
+        ]
+      },
+      {
+        question: "Detail the differences between OAuth 2.0 authorization code grant flow with PKCE vs implicit grant flow.",
+        why: "Tests advanced web authentication design safety.",
+        expectedAnswer: [
+          "Implicit grant sends tokens directly in redirect URLs, exposing them in browser histories (deprecated).",
+          "PKCE (Proof Key for Code Exchange) uses dynamic verifier and challenge values to secure code exchanges.",
+          "Protects public clients from authorization code interception attacks on callback URIs."
+        ]
+      },
+      {
+        question: "Explain how to mitigate XML External Entity (XXE) vulnerabilities in parser configurations.",
+        why: "Tests secure parser configurations and injection mitigations.",
+        expectedAnswer: [
+          "XXE occurs when XML inputs parse external entity references resolving system files or local endpoints.",
+          "Mitigation: Configure the XML parser parser options to disable External DTDs completely.",
+          "Enforce disabling Entity Resolution and external schema files."
+        ]
+      },
+      {
+        question: "How does a zero-day exploit differ from a known vulnerability, and how do you implement defense-in-depth to mitigate zero-day risks?",
+        why: "Tests advanced security engineering and threat mitigation.",
+        expectedAnswer: [
+          "Zero-day represents an unpatched, publicly unknown vulnerability with no signature checks.",
+          "Mitigate via defense-in-depth: network segmentation, sandboxing, and runtime application self-protection (RASP).",
+          "Establish anomaly-based behavior detection systems rather than simple static signature matching."
+        ]
+      }
+    ]
+  },
+  blockchain: {
+    Easy: [
+      {
+        question: "What is a blockchain, and what makes it immutable?",
+        why: "Tests foundational distributed ledger concepts.",
+        expectedAnswer: [
+          "A decentralized, distributed digital ledger recording transactions across networks.",
+          "Immutable because blocks are cryptographically linked using SHA-256 hashes.",
+          "Changing a block requires recalculating hashes of all subsequent blocks, which is computationally infeasible."
+        ]
+      },
+      {
+        question: "Explain the difference between a public blockchain and a private blockchain.",
+        why: "Checks blockchain architecture types.",
+        expectedAnswer: [
+          "Public: permissionless, open for anyone to write/verify transactions (e.g. Bitcoin, Ethereum).",
+          "Private: permissioned, network access and validator rights controlled by single organization."
+        ]
+      },
+      {
+        question: "What is a cryptocurrency wallet, and what is the difference between a public key and a private key?",
+        why: "Checks asymmetric cryptography understanding in Web3.",
+        expectedAnswer: [
+          "Wallet manages cryptographic key pairs (keys write transactions).",
+          "Public key acts as address to receive funds.",
+          "Private key signs outgoing transactions to authorize spends (must be kept secret)."
+        ]
+      },
+      {
+        question: "What is a smart contract at a high level?",
+        why: "Checks entry-level smart contract taxonomy.",
+        expectedAnswer: [
+          "Self-executing code stored directly on the blockchain.",
+          "Automatically executes actions when pre-defined conditions are met.",
+          "Enables trustless transaction setups without intermediaries."
+        ]
+      },
+      {
+        question: "Explain what 'gas' represents in Ethereum transactions.",
+        why: "Checks transaction execution mechanics.",
+        expectedAnswer: [
+          "Unit measuring the computational effort required to execute operations on Ethereum.",
+          "Users pay gas fees to compensate validators for the CPU resources needed.",
+          "Prevents infinite loop resource abuse attacks."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "Compare Proof of Work (PoW) and Proof of Stake (PoS) consensus mechanisms.",
+        why: "Tests consensus protocol understanding.",
+        expectedAnswer: [
+          "PoW: validators solve complex mathematical puzzles requiring raw computing power (high energy cost).",
+          "PoS: validators stake native currency to obtain probability of proposing next block (energy efficient).",
+          "PoS introduces staking incentives and slashing penalties for malicious behavior."
+        ]
+      },
+      {
+        question: "What is a reentrancy attack in Solidity smart contracts, and how do you prevent it?",
+        why: "Tests Solidity secure coding patterns.",
+        expectedAnswer: [
+          "Occurs when a contract calls external untrusted contracts before updating its internal balance state.",
+          "The target re-enters the withdrawal function recursively, draining funds.",
+          "Prevent using Checks-Effects-Interactions pattern or ReentrancyGuard adapters."
+        ]
+      },
+      {
+        question: "Explain ERC-20 and ERC-721 token standards.",
+        why: "Tests Web3 token taxonomy.",
+        expectedAnswer: [
+          "ERC-20 standard defines interface for fungible (interchangeable) tokens.",
+          "ERC-721 defines standard for non-fungible tokens (NFTs), where each token ID is unique."
+        ]
+      },
+      {
+        question: "What is a decentralized oracle (e.g. Chainlink), and why are oracles necessary for smart contracts?",
+        why: "Tests external data validation integrations.",
+        expectedAnswer: [
+          "Oracles feed real-world, off-chain data (e.g. price feeds) into on-chain smart contracts.",
+          "Necessary because blockchains are isolated networks and cannot query APIs directly.",
+          "Decentralized oracles prevent single points of failure in data inputs."
+        ]
+      },
+      {
+        question: "What is the purpose of EVM (Ethereum Virtual Machine) and how does it execute bytecodes?",
+        why: "Checks VM execution details.",
+        expectedAnswer: [
+          "EVM is a sandboxed, stack-based runtime executing transaction instructions on Ethereum.",
+          "Compiles high-level Solidity to bytecodes (Opcodes like ADD, PUSH, SSTORE).",
+          "Maintains state consistency across all node replicas globally."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "Design a secure Solidity contract that handles deposit and withdrawal of funds, detailing defenses against integer overflow, reentrancy, and front-running.",
+        why: "Tests advanced Web3 smart contract security design.",
+        expectedAnswer: [
+          "Use Solidity compiler versions >=0.8.0 to prevent standard math overflows.",
+          "Incorporate Checks-Effects-Interactions layout or inherit from OpenZeppelin's ReentrancyGuard.",
+          "Implement transaction gas limits and commit-reveal schemes to mitigate front-running attacks."
+        ]
+      },
+      {
+        question: "What are Zero-Knowledge Proofs (ZKPs), and how do zk-Rollups scale Ethereum L2 networks?",
+        why: "Tests advanced blockchain scalability cryptographics.",
+        expectedAnswer: [
+          "ZKPs prove a computation is correct without revealing the private inputs.",
+          "zk-Rollups execute transactions off-chain, bundling them into batches.",
+          "A succinct proof (SNARK/STARK) is submitted on-chain for instant validation, saving gas."
+        ]
+      },
+      {
+        question: "Explain the differences between optimistic rollups and zk-rollups, specifically discussing challenge periods and transaction finality.",
+        why: "Tests L2 scaling tradeoff analysis.",
+        expectedAnswer: [
+          "Optimistic assumes transactions are valid unless challenged; requires a 7-day dispute window (slower exit).",
+          "ZK-rollups use mathematical proofs to verify batch validity instantly (instant finality).",
+          "ZK is complex mathematically but scales better; Optimistic is simpler to compile EVM code."
+        ]
+      },
+      {
+        question: "How do flash loan attacks exploit decentralized finance (DeFi) protocols, and how do you mitigate them?",
+        why: "Tests advanced security risk diagnostics on blockchain networks.",
+        expectedAnswer: [
+          "Flash loans borrow massive uncollateralized funds to return within the same block transaction.",
+          "Attackers use funds to manipulate spot price feeds on low-liquidity AMM pools, draining assets.",
+          "Mitigate using decentralized, multi-source TWAP oracles (Chainlink) rather than single spot pools."
+        ]
+      },
+      {
+        question: "Describe the consensus mechanism used in Tendermint or PBFT. How does it handle validator Byzantine failures?",
+        why: "Tests core distributed systems and consensus engine theory.",
+        expectedAnswer: [
+          "Uses rounds of proposals, pre-votes, and pre-commits to decide blocks.",
+          "Requires a 2/3 supermajority of active validators to commit transactions.",
+          "Guarantees security and consensus safety as long as malicious nodes are < 1/3."
+        ]
+      }
+    ]
+  },
+  flutter: {
+    Easy: [
+      {
+        question: "What is Flutter, and how does it differ from React Native?",
+        why: "Checks mobile development frameworks baseline.",
+        expectedAnswer: [
+          "Flutter is Google's UI toolkit that compiles directly to native canvas.",
+          "React Native bridges JS files to translate UI into native OS widgets.",
+          "Flutter avoids bridges, rendering layout animations faster."
+        ]
+      },
+      {
+        question: "What is the difference between a StatefulWidget and a StatelessWidget in Flutter?",
+        why: "Checks core Flutter widget state concepts.",
+        expectedAnswer: [
+          "Stateless: configuration properties cannot change once rendered.",
+          "Stateful: holds mutable state class surviving updates, triggered via `setState`."
+        ]
+      },
+      {
+        question: "What is the pubspec.yaml file used for in a Flutter project?",
+        why: "Checks basic dependency configurations.",
+        expectedAnswer: [
+          "Declares third-party dependencies, assets, font directories, and packaging versions.",
+          "Configures asset mappings to build bundle paths."
+        ]
+      },
+      {
+        question: "Explain the purpose of the main() function and runApp() in Flutter.",
+        why: "Checks mobile compilation entrypoints.",
+        expectedAnswer: [
+          "`main()` is the standard Dart execution entrypoint.",
+          "`runApp()` takes a widget, mounting it as the root of the rendering tree."
+        ]
+      },
+      {
+        question: "What is the difference between hot reload and hot restart?",
+        why: "Checks development environment configurations.",
+        expectedAnswer: [
+          "Hot reload pushes updated code directly into Dart VM, keeping active state.",
+          "Hot restart compiles code changes, resets the app state, and re-initializes."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "Explain state management options in Flutter (e.g. Provider, Bloc, Riverpod). When would you choose one over another?",
+        why: "Tests application state architecture skills.",
+        expectedAnswer: [
+          "Provider: simple setup utilizing InheritedWidget for context-based rebuilds.",
+          "Bloc (Business Logic Component): uses streams to isolate UI from data flow patterns.",
+          "Riverpod: compile-safe, does not rely on context lookups, easing unit testing.",
+          "Choose Provider/Riverpod for small projects; choose Bloc for enterprise structures."
+        ]
+      },
+      {
+        question: "What is an InheritedWidget, and how does it propagate data down the widget tree?",
+        why: "Tests widget inheritance internals.",
+        expectedAnswer: [
+          "Base class widget allowing descendants to request shared data.",
+          "Registered in the framework, triggering updates to matching context elements on changes."
+        ]
+      },
+      {
+        question: "How does Flutter build layouts? Explain the constraint propagation rule ('Constraints go down. Sizes go up. Parent sets position.').",
+        why: "Tests layout engine internals.",
+        expectedAnswer: [
+          "Parent widget hands down min/max constraints (width/height boundaries).",
+          "Child calculates its size matching those constraints and passes it back up.",
+          "Parent positions child inside its layout coordinates."
+        ]
+      },
+      {
+        question: "How do you handle asynchronous network calls in Flutter using Futures and Streams?",
+        why: "Tests async Dart APIs.",
+        expectedAnswer: [
+          "Future: represents a single async return value (use FutureBuilder to render).",
+          "Stream: represents sequence of async returns (use StreamBuilder to listen)."
+        ]
+      },
+      {
+        question: "What is Dart's event loop model, and how does it handle microtasks versus event queues?",
+        why: "Tests Dart execution runtime internals.",
+        expectedAnswer: [
+          "Single-threaded Dart loop executing async events.",
+          "Microtask queue holds high-priority tasks, run sequentially before standard event queue (which handles I/O, timers, and clicks)."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "How does Flutter's rendering pipeline work? Detail the roles of the Widget, Element, and RenderObject trees.",
+        why: "Tests deep Flutter compiler and rendering engine internals.",
+        expectedAnswer: [
+          "Widget tree: lightweight configurations regenerated on build changes.",
+          "Element tree: holds logic and acts as structural manager linking widgets to RenderObjects.",
+          "RenderObject tree: handles calculations, coordinates layouts, and paints components."
+        ]
+      },
+      {
+        question: "How do you optimize Flutter performance under heavy lists or complex animations? Discuss RepaintBoundary and const constructors.",
+        why: "Tests performance tuning and canvas rendering optimizations.",
+        expectedAnswer: [
+          "Use `ListView.builder` to dynamically instantiate visible elements.",
+          "Incorporate `RepaintBoundary` wrappers to isolate complex animations into private paint layers.",
+          "Apply `const` constructors on widgets to reuse compiler instances, bypassing redundant builds."
+        ]
+      },
+      {
+        question: "How does Dart's garbage collector work, and how does it optimize memory management for short-lived widgets?",
+        why: "Tests Dart VM garbage collection internals.",
+        expectedAnswer: [
+          "Generational memory manager optimized for rapid allocations.",
+          "Scavenger (young generation) handles short-lived objects (widgets) using copy-collection.",
+          "Mark-sweep-compact (old generation) collects persistent state records safely."
+        ]
+      },
+      {
+        question: "Explain how to integrate native platform code in Flutter using Platform Channels (MethodChannel and EventChannel).",
+        why: "Tests mobile hardware bridge and integration skills.",
+        expectedAnswer: [
+          "MethodChannel: sends request-response method calls asynchronously between Dart and Swift/Kotlin.",
+          "EventChannel: creates event streams to broadcast continuous platform data (e.g. sensors).",
+          "Enforce type matching rules across standard platform channels."
+        ]
+      },
+      {
+        question: "Design an offline-first mobile synchronization architecture in Flutter using SQLite/Hive and local encryption.",
+        why: "Tests enterprise mobile systems design capabilities.",
+        expectedAnswer: [
+          "Store records locally using Hive/SQLite encrypted with keys stored in Keychain/KeyStore.",
+          "Establish a sync queue interceptor tracking local mutations.",
+          "Use network monitors to sync local changes to cloud endpoints on reconnects."
+        ]
+      }
+    ]
+  },
+  android: {
+    Easy: [
+      {
+        question: "What is Android Jetpack, and what is its purpose?",
+        why: "Checks Android baseline developer libraries.",
+        expectedAnswer: [
+          "Collection of Android component libraries and architecture advice.",
+          "Helps developers write clean code following Google recommendations.",
+          "Ensures compatibility across diverse Android OS versions."
+        ]
+      },
+      {
+        question: "Explain the Android Activity Lifecycle and its core callback methods.",
+        why: "Checks basic UI lifecycle flow.",
+        expectedAnswer: [
+          "States managed via: onCreate, onStart, onResume, onPause, onStop, onDestroy.",
+          "Resume/Pause define visible interaction states; Destroy releases CPU resources."
+        ]
+      },
+      {
+        question: "What is an Intent in Android, and what is the difference between explicit and implicit intents?",
+        why: "Checks application navigation routing basics.",
+        expectedAnswer: [
+          "Messaging object to request action from other app components.",
+          "Explicit defines target component classes exactly.",
+          "Implicit declares generic actions (e.g. open web link) letting OS select matching handlers."
+        ]
+      },
+      {
+        question: "What is the purpose of the AndroidManifest.xml file?",
+        why: "Checks essential project structure knowledge.",
+        expectedAnswer: [
+          "Declares application components (activities, services, receivers).",
+          "Requests OS permissions, listing hardware configurations needed."
+        ]
+      },
+      {
+        question: "What is the difference between a Fragment and an Activity?",
+        why: "Checks UI modularity basics.",
+        expectedAnswer: [
+          "Activity represents a single screen with full system lifecycle.",
+          "Fragment represents a modular UI portion hosted within an Activity."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "Explain Android Jetpack Compose. How does declarative UI differ from XML layouts?",
+        why: "Tests modern Android UI development setups.",
+        expectedAnswer: [
+          "Declarative Kotlin functions compile layout states directly, removing XML templates.",
+          "Layout adjusts dynamically to state inputs, avoiding manual DOM-style adjustments."
+        ]
+      },
+      {
+        question: "What is ViewModel, and how does it survive configuration changes like screen rotations?",
+        why: "Tests Android state persistence.",
+        expectedAnswer: [
+          "ViewModel holds UI-related state data in lifecycle-aware objects.",
+          "Survives screen rotations because it is bound to the ViewModelStore, preserved across configurations."
+        ]
+      },
+      {
+        question: "How do you perform background operations in modern Android? Compare WorkManager, Coroutines, and Services.",
+        why: "Tests background thread capabilities.",
+        expectedAnswer: [
+          "Coroutines: handles transient asynchronous actions within current execution scopes.",
+          "WorkManager: schedules guaranteed, deferrable background actions surviving app restarts.",
+          "Services: runs active processes running in background (foreground service with notifications)."
+        ]
+      },
+      {
+        question: "Explain Android's permissions model. How do runtime permissions differ from manifest permissions?",
+        why: "Tests application security layouts.",
+        expectedAnswer: [
+          "Manifest permissions are listed inside Manifest (install-time checks).",
+          "Dangerous permissions (location, camera) must be explicitly requested at runtime."
+        ]
+      },
+      {
+        question: "What is the difference between LiveData and StateFlow/SharedFlow in Kotlin/Android development?",
+        why: "Tests asynchronous reactive flows in Android.",
+        expectedAnswer: [
+          "LiveData is bound to Android lifecycles, emitting values only to active view elements.",
+          "StateFlow is a coroutine state holder emitting hot data streams, requiring active collection loops."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "Design an offline-first Android architecture utilizing MVVM, Room Database, Retrofit, and Repository pattern with Flow.",
+        why: "Tests advanced Android architecture and caching setups.",
+        expectedAnswer: [
+          "Use Repository as single source of truth, reading data from Retrofit API.",
+          "Store response caches inside local Room database.",
+          "Expose Room queries as dynamic Kotlin Flow elements observed inside ViewModel."
+        ]
+      },
+      {
+        question: "Explain how memory leaks occur in Android. How do you identify leaks using LeakCanary, and how do you prevent them?",
+        why: "Tests memory leaks diagnosis capability.",
+        expectedAnswer: [
+          "Leaks occur when short-lived context references are retained by static objects or background tasks.",
+          "Use LeakCanary to inspect reference trees of uncollected activities.",
+          "Prevent by avoiding static context variables, clearing binding refs in onDestroy."
+        ]
+      },
+      {
+        question: "Explain the internal workings of Android's Looper, Handler, and MessageQueue.",
+        why: "Tests deep thread coordination theory.",
+        expectedAnswer: [
+          "MessageQueue holds incoming application commands.",
+          "Looper runs infinite thread loop executing commands from the queue.",
+          "Handler schedules and processes messages on the Looper's thread."
+        ]
+      },
+      {
+        question: "How do you optimize Jetpack Compose performance? Detail the concept of Recomposition and how the @Stable and remember annotations prevent unnecessary renders.",
+        why: "Tests UI performance tuning.",
+        expectedAnswer: [
+          "Recomposition re-executes UI functions on state updates.",
+          "Use `remember` to cache values across recomposition cycles.",
+          "Annotate structures as `@Stable` to skip redraws when arguments match."
+        ]
+      },
+      {
+        question: "How does Android's sandboxing mechanism work? Discuss UID isolation, SELinux policies, and secure keystore storage.",
+        why: "Tests platform-level security architecture knowledge.",
+        expectedAnswer: [
+          "Android assigns separate Linux User IDs (UID) to each application to isolate directories.",
+          "SELinux policies restrict process access permissions at OS kernel level.",
+          "Android Keystore saves keys inside Trusted Execution Environments (TEE) or secure hardware."
+        ]
+      }
+    ]
+  },
+  ios: {
+    Easy: [
+      {
+        question: "What is Swift, and what are its key features?",
+        why: "Checks iOS baseline language concepts.",
+        expectedAnswer: [
+          "Modern compiled language designed by Apple for safe and fast execution.",
+          "Key features: Optionals, type-safety, generics, and automatic ARC memory management."
+        ]
+      },
+      {
+        question: "Explain the differences between SwiftUI and UIKit.",
+        why: "Checks UI development architecture types.",
+        expectedAnswer: [
+          "SwiftUI: declarative UI framework binding states directly to rendering.",
+          "UIKit: event-driven, imperative framework using storyboards/programmatic views."
+        ]
+      },
+      {
+        question: "What is an Optional in Swift, and how do you safely unwrap it?",
+        why: "Checks type-safety basics in Swift.",
+        expectedAnswer: [
+          "A type representing a value OR nil (none).",
+          "Safely unwrap using `if let`, `guard let`, or nil coalescing `??`."
+        ]
+      },
+      {
+        question: "What is the role of the Info.plist file in iOS apps?",
+        why: "Checks basic file configurations.",
+        expectedAnswer: [
+          "XML file storing configuration properties (bundle identifier, localizations, capability permissions)."
+        ]
+      },
+      {
+        question: "Explain the difference between a value type and a reference type in Swift.",
+        why: "Checks memory allocation basics.",
+        expectedAnswer: [
+          "Value types (structs, enums) are copied on assignment (allocated on stack).",
+          "Reference types (classes) share pointers to instances (allocated on heap)."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "What is Automatic Reference Counting (ARC) in Swift? How do reference cycles occur, and how do weak and unowned prevent them?",
+        why: "Tests iOS memory management.",
+        expectedAnswer: [
+          "ARC tracks active reference counts of class instances, deallocating them on zero refs.",
+          "Reference cycles occur when two classes hold strong references to each other.",
+          "Prevent cycles by declaring one reference as `weak` or `unowned`."
+        ]
+      },
+      {
+        question: "Explain GCD (Grand Central Dispatch) and OperationQueue. Contrast concurrent vs serial queues.",
+        why: "Tests concurrency controls.",
+        expectedAnswer: [
+          "GCD: C-level concurrency API managing tasks on thread pools.",
+          "OperationQueue: object-oriented wrapper adding dependency controls.",
+          "Serial queue runs one task at a time; concurrent runs multiple tasks in parallel."
+        ]
+      },
+      {
+        question: "What is the Combine framework, and how does it handle reactive asynchronous events?",
+        why: "Tests iOS reactive APIs.",
+        expectedAnswer: [
+          "Declarative framework to process async events over time.",
+          "Uses Publishers to emit data, Operators to transform, and Subscribers to receive values."
+        ]
+      },
+      {
+        question: "What are Swift protocols and protocol-oriented programming?",
+        why: "Tests design architecture paradigms in Swift.",
+        expectedAnswer: [
+          "Protocols declare blueprints of methods, properties, and requirements.",
+          "POP (Protocol-Oriented Programming) uses protocol extensions to implement default behaviors, bypassing rigid OOP inheritance hierarchies."
+        ]
+      },
+      {
+        question: "Explain how Swift Optionals and error handling with do-try-catch work.",
+        why: "Tests Swift error resilience.",
+        expectedAnswer: [
+          "Optionals handle missing values cleanly.",
+          "Methods throwing errors must be run inside `do-try-catch` blocks."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "Design an offline-first iOS architecture using MVVM, Swift Concurrency (async/await), CoreData/SwiftData, and URLSession.",
+        why: "Tests advanced iOS architecture and local storage pipelines.",
+        expectedAnswer: [
+          "ViewModel coordinates asynchronous data operations via async/await.",
+          "URLSession handles network traffic, writing payloads to SwiftData database.",
+          "MainActor isolates state updates to push views safely on the main thread."
+        ]
+      },
+      {
+        question: "Describe Swift memory management details under the hood. How does Swift compiler inject retain/release calls, and how do capture lists work in closures?",
+        why: "Tests iOS compiler execution mechanics.",
+        expectedAnswer: [
+          "ARC inserts `swift_retain` and `swift_release` instructions at compile time.",
+          "Capture lists inside closures (e.g. `[weak self]`) intercept strong self references, preventing memory leaks."
+        ]
+      },
+      {
+        question: "How do you optimize SwiftUI list rendering and animation rendering to avoid frame drops? Discuss EquatableView and id parameter.",
+        why: "Tests view layout rendering optimization.",
+        expectedAnswer: [
+          "Use LazyVStack / LazyHStack inside scroll containers.",
+          "Pass explicit stable identifiers (`id`) to allow dynamic updates.",
+          "Conform views to `Equatable` wrapping inside `EquatableView` to skip redundant layouts."
+        ]
+      },
+      {
+        question: "What is the difference between Actor and MainActor in Swift? Explain how actors serialize access to state to prevent data races.",
+        why: "Tests safe modern concurrency.",
+        expectedAnswer: [
+          "Actors are reference types serializing access to internal mutable state, eliminating data races.",
+          "MainActor is a global actor wrapping execution on the main thread (UI updates)."
+        ]
+      },
+      {
+        question: "Explain the iOS app lifecycle and transition states under UISceneDelegate (active, inactive, background, suspended).",
+        why: "Tests platform lifecycle states.",
+        expectedAnswer: [
+          "UISceneDelegate delegates UI layouts to lifecycle states.",
+          "Active: visible and interactive; Inactive: running but interrupted (notifications, calls).",
+          "Background: running background tasks; Suspended: frozen by OS memory manager."
+        ]
+      }
+    ]
+  },
+  qa: {
+    Easy: [
+      {
+        question: "What is the difference between Manual Testing and Automation Testing?",
+        why: "Checks QA baseline methodology.",
+        expectedAnswer: [
+          "Manual testing: human testers run checks step-by-step verifying inputs.",
+          "Automation testing: developer scripts execute testing steps automatically."
+        ]
+      },
+      {
+        question: "What is a Bug Life Cycle in QA tracking?",
+        why: "Checks bug tracking workflow baseline.",
+        expectedAnswer: [
+          "Sequence of states a bug moves through: New, Assigned, Open, Fixed, Retest, Verified, Closed."
+        ]
+      },
+      {
+        question: "Explain the difference between functional testing and non-functional testing.",
+        why: "Checks testing scope taxonomy.",
+        expectedAnswer: [
+          "Functional validates application features against requirements (does it work?).",
+          "Non-functional validates performance, security, and usability under stress (how does it run?)."
+        ]
+      },
+      {
+        question: "What is a Test Case, and what are its key components?",
+        why: "Checks test documentation basics.",
+        expectedAnswer: [
+          "Set of steps and inputs to verify a specific execution.",
+          "Components: Test Case ID, Description, Prerequisites, Steps, Expected Result, Actual Result."
+        ]
+      },
+      {
+        question: "What is regression testing, and when should you perform it?",
+        why: "Checks release verification basics.",
+        expectedAnswer: [
+          "Verifying that new code edits have not broken existing, stable functionalities.",
+          "Executed after major edits, bug fixes, or build deployments."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "Explain the Test Automation Pyramid. Why should you have more unit tests than UI tests?",
+        why: "Tests automation strategy reasoning.",
+        expectedAnswer: [
+          "Pyramid strategy: large unit test base, intermediate integration/API layers, minimal UI tests.",
+          "Unit tests execute rapidly and cost less; UI tests are brittle and slow."
+        ]
+      },
+      {
+        question: "How does Selenium WebDriver communicate with the browser? What are the limitations of Selenium?",
+        why: "Tests browser automation internals.",
+        expectedAnswer: [
+          "WebDriver uses JSON wire protocol or W3C protocols communicating directly via native drivers.",
+          "Limitations: limited dynamic window alerts, cannot handle native mobile apps, desktop-only."
+        ]
+      },
+      {
+        question: "What is Page Object Model (POM) in test automation, and why is it preferred?",
+        why: "Tests clean automation design patterns.",
+        expectedAnswer: [
+          "Design pattern representing web pages as classes holding selectors and interactions.",
+          "Isolates test code logic from UI changes, simplifying long-term test suite maintenance."
+        ]
+      },
+      {
+        question: "What is CI/CD integration in testing? How do you run automated tests inside a pipeline?",
+        why: "Tests CI/CD integration.",
+        expectedAnswer: [
+          "Running tests automatically on code pushes before deployment triggers.",
+          "Integrate scripts (e.g. `npm test`) as gating stages in pipeline containers."
+        ]
+      },
+      {
+        question: "Explain the difference between boundary value analysis (BVA) and equivalence partitioning (EP).",
+        why: "Tests test case design methodologies.",
+        expectedAnswer: [
+          "Equivalence Partitioning: groups input ranges into equivalent classes where behavior is similar.",
+          "Boundary Value Analysis: designs test cases testing extreme values at range borders."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "Design an automated end-to-end testing pipeline using Playwright or Cypress integrated with GitHub Actions, detailing parallel execution, artifact reports, and retry configurations.",
+        why: "Tests advanced automation pipeline architectures.",
+        expectedAnswer: [
+          "Configure test runner YAML executing on container nodes in parallel.",
+          "Enable test retries to address sporadic flakiness.",
+          "Add pipeline tasks uploading HTML report folders as artifacts on test failures."
+        ]
+      },
+      {
+        question: "How do you handle testing flakiness in UI automation? Discuss dynamic waits, element staleness, and database seeding.",
+        why: "Tests UI automation error handling.",
+        expectedAnswer: [
+          "Apply explicit dynamic waits (waiting for selectors/network idle) instead of hard sleeps.",
+          "Catch StaleElementExceptions reloading element bindings on redraws.",
+          "Seed databases directly before runs to establish deterministic states."
+        ]
+      },
+      {
+        question: "How do you design a performance and load testing strategy using k6 or JMeter to validate response SLAs under 10k concurrent users?",
+        why: "Tests load testing capabilities.",
+        expectedAnswer: [
+          "Write user behavior scripts (login, search, checkout).",
+          "Configure execution phases: ramp-up, steady state load, and ramp-down.",
+          "Define threshold SLAs (e.g. error rate < 1%, 95th percentile latency < 500ms)."
+        ]
+      },
+      {
+        question: "Explain contract testing (e.g. using Pact) in microservices architecture. How does it prevent integration failures?",
+        why: "Tests integration testing patterns.",
+        expectedAnswer: [
+          "Defines schemas/agreements between consumer services and provider APIs.",
+          "Consumer builds contract specifications verified locally.",
+          "Provider runs checks validating compliance, ensuring breaking API updates are caught before releases."
+        ]
+      },
+      {
+        question: "What is the difference between white-box, black-box, and gray-box testing? Discuss code coverage analysis tools and mutation testing.",
+        why: "Tests theoretical QA testing frameworks.",
+        expectedAnswer: [
+          "White-box: code structures are fully transparent; black-box: internal implementation is hidden.",
+          "Gray-box: validates integrations with partial system knowledge.",
+          "Use mutation testing to insert faults inside source code, validating if active test suites identify changes."
+        ]
+      }
+    ]
+  },
+  product_management: {
+    Easy: [
+      {
+        question: "What is a Product Roadmap, and what is its purpose?",
+        why: "Checks product planning baseline.",
+        expectedAnswer: [
+          "Visual schedule of high-level features and priorities aligning with business objectives.",
+          "Serves as single source of truth aligning stakeholders and engineering teams."
+        ]
+      },
+      {
+        question: "Explain the agile scrum process and the key ceremonies.",
+        why: "Checks scrum management basics.",
+        expectedAnswer: [
+          "Iterative development approach split into sprints.",
+          "Ceremonies: Sprint Planning, Daily Standup, Sprint Review, Sprint Retrospective."
+        ]
+      },
+      {
+        question: "What is an MVP (Minimum Viable Product), and why is it used?",
+        why: "Checks product validation baseline.",
+        expectedAnswer: [
+          "Early product release containing just enough core capabilities to satisfy early adopters.",
+          "Used to collect user feedback, validating product hypotheses quickly with minimal cost."
+        ]
+      },
+      {
+        question: "What is the difference between a Product Manager (PM) and a Project Manager?",
+        why: "Checks role definition taxonomy.",
+        expectedAnswer: [
+          "Product Manager defines the product vision, strategy, and features (the 'what' and 'why').",
+          "Project Manager coordinates delivery schedules, timelines, and resource tasks (the 'how' and 'when')."
+        ]
+      },
+      {
+        question: "What are KPIs (Key Performance Indicators), and why are they important?",
+        why: "Checks product metrics baseline.",
+        expectedAnswer: [
+          "Quantifiable indicators measuring product or feature success against goals.",
+          "Provide data-driven evidence of alignment with targets."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "How do you prioritize features for a product backlog? Explain prioritization frameworks like RICE or MoSCoW.",
+        why: "Tests backlog management skills.",
+        expectedAnswer: [
+          "RICE: evaluates features using Reach, Impact, Confidence, and Effort calculations.",
+          "MoSCoW: categorizes features into Must-have, Should-have, Could-have, and Won't-have.",
+          "Enforce prioritizing customer value against implementation complexity."
+        ]
+      },
+      {
+        question: "How do you define and write user stories with clear Acceptance Criteria using Gherkin syntax?",
+        why: "Tests backlog documentation skills.",
+        expectedAnswer: [
+          "User story: 'As a [user], I want to [action] so that [benefit]'.",
+          "Gherkin acceptance criteria format: Given [precondition] When [action] Then [expected outcome]."
+        ]
+      },
+      {
+        question: "Explain the product lifecycle phases (Introduction, Growth, Maturity, Decline).",
+        why: "Tests product lifecycle awareness.",
+        expectedAnswer: [
+          "Introduction: focus on product validation and early user acquisition.",
+          "Growth: focus on market expansion, scaling features, and customer conversion.",
+          "Maturity: focus on feature optimization, retention, and pricing models.",
+          "Decline: focus on cost reduction or sunset planning."
+        ]
+      },
+      {
+        question: "How do you perform user research and run A/B testing to validate feature utility?",
+        why: "Tests quantitative product validation.",
+        expectedAnswer: [
+          "Collect user feedback via surveys, user testing, and interviews.",
+          "Deploy features as A/B splits, routing percentages of users to v1 and v2, analyzing metric changes."
+        ]
+      },
+      {
+        question: "What is product-market fit, and what indicators show you have achieved it?",
+        why: "Tests market validation criteria.",
+        expectedAnswer: [
+          "State where a product satisfies strong customer demand.",
+          "Indicators: high cohort retention rates, organic user acquisition, and positive NPS scores."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "How do you handle prioritization conflicts between sales requests, technical debt, and long-term product vision?",
+        why: "Tests senior PM trade-off optimization.",
+        expectedAnswer: [
+          "Map sales requests to revenue impact and customer growth.",
+          "Allocate a fixed budget portion of sprints to address refactoring and technical debt.",
+          "Evaluate features using long-term roadmap alignment metrics."
+        ]
+      },
+      {
+        question: "Design a product monetization and pricing transition strategy from freemium to tiered subscription models without alienating active users.",
+        why: "Tests strategic monetization design.",
+        expectedAnswer: [
+          "Keep legacy users grandfathered in their original free tiers temporarily.",
+          "Introduce new, premium features restricted to paid tiers.",
+          "Conduct cohort pricing experiments to determine tier price sensitivity before announcement."
+        ]
+      },
+      {
+        question: "Explain product analytics tracking setups. How do you design user cohort retention funnels using Amplitude or Mixpanel?",
+        why: "Tests product telemetry design.",
+        expectedAnswer: [
+          "Instrument key user actions (e.g. signup, upload, generate) as event trackers.",
+          "Establish funnels tracing conversions from landing to key generation actions.",
+          "Create cohorts based on signup dates to analyze weekly retention curves."
+        ]
+      },
+      {
+        question: "How do you manage product development under high market uncertainty? Detail how you apply Dual-Track Agile (Discovery vs Delivery).",
+        why: "Tests product discovery models.",
+        expectedAnswer: [
+          "Discovery track: runs customer research and user testing validation (checks desirability/viability).",
+          "Delivery track: runs code building and release engineering tasks.",
+          "Ensures engineering teams build only validated feature patterns."
+        ]
+      },
+      {
+        question: "Analyze customer acquisition cost (CAC) and customer lifetime value (LTV). What LTV:CAC ratio indicates a healthy business, and how do PMs optimize it?",
+        why: "Tests metrics analytics.",
+        expectedAnswer: [
+          "Healthy LTV:CAC ratio is generally 3:1 or higher.",
+          "Optimize LTV by improving onboarding, building high value feature retention loops, and upselling.",
+          "Reduce CAC by improving organic search channels and referral loops."
+        ]
+      }
+    ]
+  },
+  cloud: {
+    Easy: [
+      {
+        question: "What is Cloud Computing? Define IaaS, PaaS, and SaaS.",
+        why: "Checks cloud baseline concepts.",
+        expectedAnswer: [
+          "Delivery of computing services over the internet.",
+          "IaaS: Infrastructure as a Service (EC2 instances).",
+          "PaaS: Platform as a Service (Heroku).",
+          "SaaS: Software as a Service (Google Workspace)."
+        ]
+      },
+      {
+        question: "Explain the concept of Virtual Private Cloud (VPC).",
+        why: "Checks cloud networking basics.",
+        expectedAnswer: [
+          "Isolated private network space allocated inside public cloud providers.",
+          "Allows clients to control subnets, IP layouts, and routing gateways."
+        ]
+      },
+      {
+        question: "What is Auto Scaling, and why is it used in cloud infrastructure?",
+        why: "Checks cloud resource scaling basics.",
+        expectedAnswer: [
+          "Automatically adjusts server resource allocations matching workload demand.",
+          "Saves infrastructure cost during low traffic; prevents server exhaustion on spikes."
+        ]
+      },
+      {
+        question: "What is a Content Delivery Network (CDN) and how does it speed up websites?",
+        why: "Checks cloud CDN basics.",
+        expectedAnswer: [
+          "Distributed global edge servers caching static resources (images, JS).",
+          "Routes traffic to the closest geographical node, saving bandwidth and latency."
+        ]
+      },
+      {
+        question: "What is Cloud Security's Shared Responsibility Model?",
+        why: "Checks basic cloud security configurations.",
+        expectedAnswer: [
+          "Cloud provider secures physical server environments (security OF the cloud).",
+          "Client secures software, databases, network connections, and configs (security IN the cloud)."
+        ]
+      }
+    ],
+    Medium: [
+      {
+        question: "Explain how VPC security groups differ from Network Access Control Lists (NACLs).",
+        why: "Tests cloud network security controls.",
+        expectedAnswer: [
+          "Security Groups: stateful, apply at instances level, support allow rules only.",
+          "NACLs: stateless, apply at subnet boundaries, support allow and deny rules."
+        ]
+      },
+      {
+        question: "What is Cloud storage tiering? Compare AWS S3 Standard, IA, Glacier, and Deep Archive.",
+        why: "Tests cloud storage optimization.",
+        expectedAnswer: [
+          "S3 Standard: frequent access, low retrieval cost.",
+          "S3 IA (Infrequent Access): cheaper storage, higher retrieval cost.",
+          "S3 Glacier / Deep Archive: archival storage, extremely cheap storage, retrieval times range from minutes to hours."
+        ]
+      },
+      {
+        question: "How does DNS-based routing (e.g. Route 53) support latency-based, failover, and weighted routing?",
+        why: "Tests cloud routing configurations.",
+        expectedAnswer: [
+          "Latency: directs users to regions yielding lowest network latency.",
+          "Failover: automatically redirects users to secondary regions on primary health check failures.",
+          "Weighted: routes percentages of traffic to different IP endpoints."
+        ]
+      },
+      {
+        question: "What is the purpose of Infrastructure as Code (IaC)? Contrast declarative vs imperative tools.",
+        why: "Tests IaC deployment architecture.",
+        expectedAnswer: [
+          "Automating cloud infrastructure provisioning using configuration files.",
+          "Declarative: defines target state exact configurations (Terraform).",
+          "Imperative: declares execution commands to run (Ansible)."
+        ]
+      },
+      {
+        question: "What is IAM (Identity and Access Management)? Explain policies, roles, and groups.",
+        why: "Tests cloud identity access controls.",
+        expectedAnswer: [
+          "IAM controls system access permissions.",
+          "Policies: JSON files defining allowable actions on resources.",
+          "Roles: temporary credentials assumed by users or compute services.",
+          "Groups: clusters of users mapped to simplify permission assignments."
+        ]
+      }
+    ],
+    Hard: [
+      {
+        question: "Design a multi-region disaster recovery cloud architecture supporting Active-Active configuration with near-zero RPO and RTO.",
+        why: "Tests advanced enterprise cloud network architectures.",
+        expectedAnswer: [
+          "Route global user traffic using Route 53 latency-based routing with active health checks.",
+          "Deploy application clusters inside distinct regions behind Application Load Balancers.",
+          "Configure global databases (DynamoDB Global Tables) replicating data bidirectionally."
+        ]
+      },
+      {
+        question: "How do you secure cloud keys and secrets inside microservice containers? Detail integrations using AWS Secrets Manager or HashiCorp Vault.",
+        why: "Tests secure container architecture design.",
+        expectedAnswer: [
+          "Inject secrets dynamically at runtime rather than saving files inside container images.",
+          "Inject secrets via sidecar containers or direct SDK calls.",
+          "Enforce automatic secrets rotation configurations."
+        ]
+      },
+      {
+        question: "How do you design a cost-efficient serverless data analytics pipeline using S3, Athena, Glue, and QuickSight?",
+        why: "Tests serverless data integrations.",
+        expectedAnswer: [
+          "Store bulk raw logs/files inside S3 buckets.",
+          "Use AWS Glue crawlers to partition and generate table schemas.",
+          "Run ad-hoc SQL queries using Amazon Athena, reading S3 data directly.",
+          "Present dashboard visuals using Amazon QuickSight, querying Athena."
+        ]
+      },
+      {
+        question: "Explain cloud-native network connectivity options. Compare VPC Peering, Transit Gateway, and VPN/Direct Connect.",
+        why: "Tests cloud network architecture options.",
+        expectedAnswer: [
+          "VPC Peering: point-to-point non-transitive connection between two VPCs.",
+          "Transit Gateway: centralized network hub routing traffic across multiple VPCs and environments.",
+          "VPN/Direct Connect: bridges on-premise environments to cloud networks (Direct Connect is dedicated fiber)."
+        ]
+      },
+      {
+        question: "Explain how to audit and protect cloud infrastructure against resource misconfigurations and compliance violations at scale.",
+        why: "Tests compliance auditing at scale.",
+        expectedAnswer: [
+          "Enforce static analysis scanning on IaC templates (trivy, tfsec) in pipelines.",
+          "Run continuous configuration checkers (AWS Config) matching compliance profiles.",
+          "Automate alerts and auto-remediation loops for non-compliant resources."
+        ]
+      }
+    ]
   }
 };
 
 const HR_POOLS = {
   Easy: [
     {
-      question: "Walk me through your background and professional history as detailed on your resume.",
+      question: "Walk me through your background and professional history as a [targetRole] as detailed on your resume.",
       why: "Evaluates verbal communication style, career trajectory, and how they summarize achievements."
     },
     {
@@ -1502,11 +2603,11 @@ const HR_POOLS = {
       why: "Measures candidate role alignment and motivation."
     },
     {
-      question: "What do you consider your greatest professional strength and how will it help you in this role?",
+      question: "What do you consider your greatest professional strength and how will it help you as a [targetRole]?",
       why: "Checks self-awareness and how their qualities match the team description."
     },
     {
-      question: "Tell me about a project on your resume that you are particularly proud of.",
+      question: "Tell me about a project on your resume that you are particularly proud of as a [targetRole].",
       why: "Allows candidate to showcase technical interest and communication skills."
     },
     {
@@ -1516,45 +2617,45 @@ const HR_POOLS = {
   ],
   Medium: [
     {
-      question: "How do you handle tight deadlines or multiple competing priorities?",
+      question: "How do you handle tight deadlines or multiple competing priorities in your work as a [targetRole]?",
       why: "Checks time management, prioritization skills, and transparency in communication."
     },
     {
-      question: "Tell me about a time you had a professional disagreement or conflict within a team. How did you navigate it?",
+      question: "Tell me about a time you had a professional disagreement or conflict within a team as a [targetRole]. How did you navigate it?",
       why: "Evaluates collaboration, active listening, and conflict resolution capability."
     },
     {
-      question: "Describe a project experience where you had to collaborate closely with non-technical stakeholders.",
+      question: "Describe a project experience as a [targetRole] where you had to collaborate closely with non-technical stakeholders.",
       why: "Checks ability to translate complex technology terms into clear business objectives."
     },
     {
-      question: "How do you approach learning a completely new technology when starting a new project?",
+      question: "How do you approach learning a completely new technology when starting a new [targetRole] project?",
       why: "Measures resourcefulness and adaptation methods."
     },
     {
-      question: "Tell me about a time when you received constructive feedback. How did you act on it?",
+      question: "Tell me about a time when you received constructive feedback as a [targetRole]. How did you act on it?",
       why: "Checks humility, maturity, and capacity for self-improvement."
     }
   ],
   Hard: [
     {
-      question: "Describe a significant technical failure or setback you experienced. What did you learn and how did you recover?",
+      question: "Describe a significant professional or technical setback you experienced as a [targetRole]. What did you learn and how did you recover?",
       why: "Evaluates resilience, analytical post-mortem reasoning, and learning adaptability."
     },
     {
-      question: "Tell me about a time when you had to make a critical architectural decision under high ambiguity or time pressure.",
+      question: "Tell me about a time when you had to make a critical architectural or process decision as a [targetRole] under high ambiguity or time pressure.",
       why: "Checks engineering maturity, risk management, and decision-making logic."
     },
     {
-      question: "How do you handle a situation when you realize a project will not meet its deadline? Walk me through your communication strategy.",
+      question: "How do you handle a situation when you realize a [targetRole] project will not meet its deadline? Walk me through your communication strategy.",
       why: "Checks stakeholder coordination, integrity, and proactive risk assessment."
     },
     {
-      question: "Tell me about a complex project where you had to balance technical debt with shipping speed. What compromises did you make?",
+      question: "Tell me about a complex project where you had to balance technical debt with shipping speed as a [targetRole]. What compromises did you make?",
       why: "Checks real-world trade-off reasoning and pragmatism."
     },
     {
-      question: "Describe a scenario where you led a technical initiative without having direct authority over the team members.",
+      question: "Describe a scenario where you led a [targetRole] initiative without having direct authority over the team members.",
       why: "Measures horizontal leadership, persuasion skills, and collaborative influence."
     }
   ]
@@ -1578,31 +2679,91 @@ export function generateFallbackQuestions(resume, options) {
 
   // 1. Identify matching role category based on targetRole
   const roleLower = (targetRole || '').toLowerCase();
+  
+  // Set up categories to pool from dynamically to increase questions pool size and category relevance
+  let categoriesToPool = [];
   let matchedCategory = 'general';
 
   if (roleLower.includes('machine learning') || roleLower.includes('data scientist') || roleLower.includes('data analyst') || roleLower.includes('ml ') || roleLower.startsWith('ml') || roleLower.includes('deep learning')) {
     matchedCategory = 'machine_learning';
-  } else if (roleLower.includes('ai ') || roleLower.startsWith('ai') || roleLower.includes('nlp') || roleLower.includes('llm') || roleLower.includes('transformers') || roleLower.includes('artificial intelligence')) {
+    categoriesToPool.push('machine_learning');
+  } else if (roleLower.includes('ai ') || roleLower.startsWith('ai') || roleLower.includes('nlp') || roleLower.includes('llm') || roleLower.includes('transformers') || roleLower.includes('artificial intelligence') || roleLower.includes('ai researcher')) {
     matchedCategory = 'ai';
-  } else if (roleLower.includes('devops') || roleLower.includes('sre') || roleLower.includes('site reliability') || roleLower.includes('jenkins') || roleLower.includes('ci/cd') || roleLower.includes('docker') || roleLower.includes('kubernetes')) {
+    categoriesToPool.push('ai');
+  } else if (roleLower.includes('devops') || roleLower.includes('sre') || roleLower.includes('site reliability') || roleLower.includes('jenkins') || roleLower.includes('ci/cd') || roleLower.includes('docker') || roleLower.includes('kubernetes') || roleLower.includes('infrastructure')) {
     matchedCategory = 'devops';
-  } else if (roleLower.includes('cloud') || roleLower.includes('aws') || roleLower.includes('azure') || roleLower.includes('gcp') || roleLower.includes('terraform') || roleLower.includes('iam') || roleLower.includes('vpc')) {
+    categoriesToPool.push('devops');
+  } else if (roleLower.includes('cloud') || roleLower.includes('aws') || roleLower.includes('azure') || roleLower.includes('gcp') || roleLower.includes('terraform') || roleLower.includes('iam') || roleLower.includes('vpc') || roleLower.includes('systems administrator') || roleLower.includes('cloud architect')) {
     matchedCategory = 'cloud';
+    categoriesToPool.push('cloud');
+  } else if (roleLower.includes('cybersecurity') || roleLower.includes('security') || roleLower.includes('owasp') || roleLower.includes('threat') || roleLower.includes('security audit') || roleLower.includes('penetration') || roleLower.includes('ciso')) {
+    matchedCategory = 'cybersecurity';
+    categoriesToPool.push('cybersecurity');
+  } else if (roleLower.includes('blockchain') || roleLower.includes('smart contract') || roleLower.includes('consensus') || roleLower.includes('web3') || roleLower.includes('solidity') || roleLower.includes('ethereum')) {
+    matchedCategory = 'blockchain';
+    categoriesToPool.push('blockchain');
+  } else if (roleLower.includes('flutter') || roleLower.includes('dart') || roleLower.includes('react native') || roleLower.includes('widgets')) {
+    matchedCategory = 'flutter';
+    categoriesToPool.push('flutter');
+  } else if (roleLower.includes('android') || roleLower.includes('jetpack') || roleLower.includes('activities') || roleLower.includes('fragments')) {
+    matchedCategory = 'android';
+    categoriesToPool.push('android');
+  } else if (roleLower.includes('ios') || roleLower.includes('swift') || roleLower.includes('uikit') || roleLower.includes('swiftui')) {
+    matchedCategory = 'ios';
+    categoriesToPool.push('ios');
+  } else if (roleLower.includes('qa') || roleLower.includes('testing') || roleLower.includes('automation') || roleLower.includes('bug tracking') || roleLower.includes('test cases') || roleLower.includes('sdet')) {
+    matchedCategory = 'qa';
+    categoriesToPool.push('qa');
+  } else if (roleLower.includes('product manager') || roleLower.includes('project manager') || roleLower.includes('scrum master') || roleLower.includes('business analyst') || roleLower.includes('product strategy') || roleLower.includes('kpis') || roleLower.includes('roadmap') || roleLower.includes('stakeholder')) {
+    matchedCategory = 'product_management';
+    categoriesToPool.push('product_management');
   } else if (roleLower.includes('backend') || roleLower.includes('node') || roleLower.includes('express') || roleLower.includes('api') || roleLower.includes('sql') || roleLower.includes('mongodb') || roleLower.includes('redis') || roleLower.includes('server') || roleLower.includes('database')) {
     matchedCategory = 'backend';
+    categoriesToPool.push('backend');
   } else if (roleLower.includes('frontend') || roleLower.includes('react') || roleLower.includes('ui') || roleLower.includes('css') || roleLower.includes('rendering') || roleLower.includes('dom') || roleLower.includes('javascript') || roleLower.includes('typescript')) {
     matchedCategory = 'frontend';
+    categoriesToPool.push('frontend');
+  } else if (roleLower.includes('full stack') || roleLower.includes('fullstack')) {
+    matchedCategory = 'fullstack';
+    categoriesToPool.push('frontend', 'backend');
+  } else if (roleLower.includes('software') || roleLower.includes('engineer') || roleLower.includes('developer') || roleLower.includes('programmer')) {
+    matchedCategory = 'software_engineering';
+    categoriesToPool.push('frontend', 'backend', 'cloud', 'general');
+  } else {
+    matchedCategory = 'general';
+    categoriesToPool.push('frontend', 'backend', 'cloud', 'devops', 'machine_learning', 'ai', 'general');
   }
 
   // 2. Fetch technical questions pool matching selected difficulty
   let techPool = [];
-  const primaryPool = TECHNICAL_POOLS[matchedCategory]?.[difficulty] || [];
-  techPool.push(...primaryPool);
+  categoriesToPool.forEach(cat => {
+    const catPool = TECHNICAL_POOLS[cat]?.[difficulty] || [];
+    techPool.push(...catPool);
+  });
 
-  // Merge general questions to double pool size and increase variance
-  if (matchedCategory !== 'general') {
+  // Dynamic Fallback within the same selected category first!
+  // If the target difficulty pool has fewer questions than requested, draw from other difficulties
+  // within the same categories to satisfy "no unrelated questions appear".
+  if (techPool.length < number) {
+    const otherDifficulties = ['Easy', 'Medium', 'Hard'].filter(d => d !== difficulty);
+    for (const d of otherDifficulties) {
+      categoriesToPool.forEach(cat => {
+        const catPool = TECHNICAL_POOLS[cat]?.[d] || [];
+        techPool.push(...catPool);
+      });
+      if (techPool.length >= number) break;
+    }
+  }
+
+  // Always merge general questions to increase pool size and variance if not already added
+  if (techPool.length < number && !categoriesToPool.includes('general')) {
     const generalPool = TECHNICAL_POOLS['general']?.[difficulty] || [];
     techPool.push(...generalPool);
+  }
+
+  // Fallback to general pool if no questions found
+  if (techPool.length === 0) {
+    techPool = TECHNICAL_POOLS['general']?.[difficulty] || [];
   }
 
   // Deduplicate tech pool based on question content
