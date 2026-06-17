@@ -199,9 +199,9 @@ const MockInterviewPage = () => {
   const [targetRole, setTargetRole] = useState('');
   const [roleSearchQuery, setRoleSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [intType, setIntType] = useState('Technical');
-  const [intDifficulty, setIntDifficulty] = useState('Medium');
-  const [intNumber, setIntNumber] = useState(5);
+  const [intType, setIntType] = useState('');
+  const [intDifficulty, setIntDifficulty] = useState('');
+  const [intNumber, setIntNumber] = useState(null);
 
   // Generation states
   const [isGenerating, setIsGenerating] = useState(false);
@@ -209,6 +209,7 @@ const MockInterviewPage = () => {
   const [qError, setQError] = useState(null);
   const [qMethod, setQMethod] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({ role: false, type: false, difficulty: false, count: false });
 
   const navigate = useNavigate();
 
@@ -220,7 +221,23 @@ const MockInterviewPage = () => {
     try {
       const res = await resumeAPI.getAll();
       if (res.success) {
-        setResumes(res.data.resumes || []);
+        const list = res.data.resumes || [];
+        setResumes(list);
+        if (list.length > 0) {
+          const firstId = list[0].id;
+          setSelectedResumeId(firstId);
+          setIsLoadingResumeText(true);
+          try {
+            const resumeRes = await resumeAPI.getOne(firstId);
+            if (resumeRes.success && resumeRes.data?.resume) {
+              setResumeText(resumeRes.data.resume.resumeText || '');
+            }
+          } catch (err) {
+            console.error('Failed to load first resume details:', err);
+          } finally {
+            setIsLoadingResumeText(false);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to fetch resumes:', err);
@@ -252,6 +269,27 @@ const MockInterviewPage = () => {
 
   const handleGenerateQuestions = async (e) => {
     if (e) e.preventDefault();
+
+    // Validate required fields
+    const missing = {
+      role: !targetRole.trim(),
+      type: !intType,
+      difficulty: !intDifficulty,
+      count: intNumber === null
+    };
+    setValidationErrors(missing);
+
+    const missingFields = [];
+    if (missing.role) missingFields.push('Target Job Role');
+    if (missing.type) missingFields.push('Interview Type');
+    if (missing.difficulty) missingFields.push('Difficulty Level');
+    if (missing.count) missingFields.push('Number of Questions');
+
+    if (missingFields.length > 0) {
+      setQError(`Please select the following before generating: ${missingFields.join(', ')}.`);
+      return;
+    }
+
     setIsGenerating(true);
     setQError(null);
     try {
@@ -268,9 +306,10 @@ const MockInterviewPage = () => {
         resumeId: selectedResumeId || undefined
       };
 
-      console.log('Sending standalone interview request:', payload);
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 3000));
+      const apiPromise = resumeAPI.generateInterviewQuestionsStandalone(payload);
+      const [res] = await Promise.all([apiPromise, delayPromise]);
 
-      const res = await resumeAPI.generateInterviewQuestionsStandalone(payload);
       if (res?.success && res?.questions) {
         setQuestions(res.questions);
         setQMethod(res.method || 'ai');
@@ -390,10 +429,10 @@ const MockInterviewPage = () => {
             className="mb-8"
           >
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 font-heading font-sans">
-              🎤 Standalone Mock Interview Generator
+              Mock Interview Generator
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Prepare with custom technical and HR questions tailored to your target job role. Resume upload is optional!
+              Prepare with custom technical and HR questions tailored to your target job role.
             </p>
           </motion.div>
 
@@ -407,45 +446,6 @@ const MockInterviewPage = () => {
                 </h2>
 
                 <form onSubmit={handleGenerateQuestions} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                      Select Stored Resume (Optional)
-                    </label>
-                    <select
-                      value={selectedResumeId}
-                      onChange={handleResumeChange}
-                      disabled={loadingResumes}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-                    >
-                      <option value="">-- Generate without stored resume --</option>
-                      {resumes.map(r => (
-                        <option key={r.id} value={r.id}>
-                          {r.original_filename || r.filename}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {!selectedResumeId && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                        Paste Resume Text (Optional)
-                      </label>
-                      <textarea
-                        rows="4"
-                        value={resumeText}
-                        onChange={(e) => setResumeText(e.target.value)}
-                        placeholder="Paste your resume details here to focus questions on your actual experience..."
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-                      />
-                    </div>
-                  )}
-
-                  {selectedResumeId && isLoadingResumeText && (
-                    <div className="text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 animate-pulse">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Loading resume contents...
-                    </div>
-                  )}
 
                   <div className="relative">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
@@ -461,9 +461,10 @@ const MockInterviewPage = () => {
                       onChange={(e) => {
                         setRoleSearchQuery(e.target.value);
                         setTargetRole(e.target.value);
+                        if (e.target.value.trim()) setValidationErrors(prev => ({ ...prev, role: false }));
                       }}
                       placeholder="Search or type a target role..."
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                      className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrors.role ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                     />
 
                     {isDropdownOpen && (
@@ -493,6 +494,7 @@ const MockInterviewPage = () => {
                                       setTargetRole(role);
                                       setRoleSearchQuery(role);
                                       setIsDropdownOpen(false);
+                                      setValidationErrors(prev => ({ ...prev, role: false }));
                                     }}
                                     className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
                                   >
@@ -521,15 +523,15 @@ const MockInterviewPage = () => {
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Interview Type
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className={`grid grid-cols-3 gap-2 rounded-xl p-1 transition-all ${validationErrors.type ? 'ring-2 ring-red-500' : ''}`}>
                       {['Technical', 'HR', 'Mixed'].map(type => (
                         <button
                           key={type}
                           type="button"
-                          onClick={() => setIntType(type)}
+                          onClick={() => { setIntType(prev => prev === type ? '' : type); setValidationErrors(prev => ({ ...prev, type: false })); }}
                           className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all ${
                             intType === type
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                              ? 'bg-cyan-600 text-white border-cyan-600 dark:bg-cyan-500 dark:border-cyan-500 shadow-md'
                               : 'bg-slate-50 dark:bg-charcoal-900 border-slate-200 dark:border-charcoal-700 text-gray-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-charcoal-800'
                           }`}
                         >
@@ -543,15 +545,19 @@ const MockInterviewPage = () => {
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Difficulty Level
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className={`grid grid-cols-3 gap-2 rounded-xl p-1 transition-all ${validationErrors.difficulty ? 'ring-2 ring-red-500' : ''}`}>
                       {['Easy', 'Medium', 'Hard'].map(lvl => (
                         <button
                           key={lvl}
                           type="button"
-                          onClick={() => setIntDifficulty(lvl)}
+                          onClick={() => { setIntDifficulty(prev => prev === lvl ? '' : lvl); setValidationErrors(prev => ({ ...prev, difficulty: false })); }}
                           className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all ${
                             intDifficulty === lvl
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                              ? lvl === 'Easy'
+                                ? 'bg-green-600 text-white border-green-600 dark:bg-green-500 dark:border-green-500 shadow-md'
+                                : lvl === 'Medium'
+                                ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                                : 'bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500 shadow-md'
                               : 'bg-slate-50 dark:bg-charcoal-900 border-slate-200 dark:border-charcoal-700 text-gray-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-charcoal-800'
                           }`}
                         >
@@ -565,15 +571,15 @@ const MockInterviewPage = () => {
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Number of Questions
                     </label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className={`grid grid-cols-3 gap-2 rounded-xl p-1 transition-all ${validationErrors.count ? 'ring-2 ring-red-500' : ''}`}>
                       {[5, 10, 15].map(num => (
                         <button
                           key={num}
                           type="button"
-                          onClick={() => setIntNumber(num)}
+                          onClick={() => { setIntNumber(prev => prev === num ? null : num); setValidationErrors(prev => ({ ...prev, count: false })); }}
                           className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all ${
                             intNumber === num
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                              ? 'bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500 shadow-md'
                               : 'bg-slate-50 dark:bg-charcoal-900 border-slate-200 dark:border-charcoal-700 text-gray-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-charcoal-800'
                           }`}
                         >
@@ -608,7 +614,7 @@ const MockInterviewPage = () => {
 
             {/* Output (Right) */}
             <div className="md:col-span-7 lg:col-span-8">
-              <div className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[550px] flex flex-col justify-between">
+              <div className={`glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[550px] flex flex-col justify-between${isGenerating ? ' rotating-neon-border' : ''}`}>
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 dark:border-charcoal-700 pb-4 mb-6">
                     <div>
@@ -673,7 +679,7 @@ const MockInterviewPage = () => {
                         <Zap className="w-6 h-6 text-amber-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-bounce" />
                       </div>
                       <p className="text-gray-600 dark:text-gray-400 font-medium">
-                        Synthesizing role specifications and formulating mock questions...
+                        Synthesizing role specifications and formulating mock questions<span className="loading-dots"></span>
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 max-w-sm">
                         Formatting interview outlines, preparing sample questions, and establishing key evaluation outlines.

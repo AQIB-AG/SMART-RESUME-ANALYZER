@@ -80,6 +80,44 @@ const printPdf = (title, htmlContent) => {
   }, 300);
 };
 
+const COMPANIES = [
+  "Tata Consultancy Services", "Infosys", "Wipro", "HCLTech", "Tech Mahindra",
+  "Reliance Industries", "Tata Steel", "Tata Motors", "Larsen & Toubro", "Mahindra & Mahindra",
+  "State Bank of India", "ICICI Bank", "HDFC Bank", "Axis Bank", "Bharat Petroleum",
+  "Indian Oil Corporation", "Oil and Natural Gas Corporation", "Coal India", "Adani Enterprises",
+  "Adani Ports and Special Economic Zone", "Asian Paints", "Hindustan Unilever", "ITC Limited",
+  "Maruti Suzuki", "Bajaj Finserv", "Bajaj Auto", "UltraTech Cement", "JSW Steel",
+  "Sun Pharmaceutical Industries", "Dr. Reddy's Laboratories", "Other"
+];
+
+const ROLES = [
+  "Software Engineer", "Software Developer", "Full Stack Developer", "Frontend Developer",
+  "Backend Developer", "MERN Stack Developer", "MEAN Stack Developer", "Java Developer",
+  "Python Developer", ".NET Developer", "PHP Developer", "React Developer",
+  "Angular Developer", "Node.js Developer", "Mobile App Developer", "Android Developer",
+  "iOS Developer", "Flutter Developer", "React Native Developer", "DevOps Engineer",
+  "Site Reliability Engineer", "Cloud Engineer", "Cloud Architect", "Data Engineer",
+  "Data Analyst", "Business Analyst", "Data Scientist", "Machine Learning Engineer",
+  "AI Engineer", "Generative AI Engineer", "Prompt Engineer", "NLP Engineer",
+  "Computer Vision Engineer", "MLOps Engineer", "Cybersecurity Analyst", "Ethical Hacker",
+  "Security Engineer", "Network Engineer", "Database Administrator", "SQL Developer",
+  "Blockchain Developer", "SAP Consultant", "Salesforce Developer", "Salesforce Administrator",
+  "UI Designer", "UX Designer", "Product Designer", "Product Manager",
+  "Project Manager", "Scrum Master", "QA Engineer", "Automation Tester",
+  "Manual Tester", "Performance Tester", "Embedded Systems Engineer", "IoT Engineer",
+  "ERP Developer", "Technical Support Engineer", "Systems Engineer", "Application Support Engineer",
+  "Linux Administrator", "Windows Administrator", "Platform Engineer", "Solutions Architect",
+  "Enterprise Architect", "Big Data Engineer", "BI Developer", "Power BI Developer",
+  "Tableau Developer", "Robotics Engineer", "AR/VR Developer", "Game Developer",
+  "Firmware Engineer", "Site Engineer", "Release Engineer", "Build Engineer",
+  "Infrastructure Engineer", "API Developer", "Integration Engineer", "Digital Transformation Consultant",
+  "IT Consultant", "Technology Analyst", "Technology Consultant", "Risk Analyst",
+  "SOC Analyst", "Cloud Security Engineer", "Penetration Tester", "Information Security Analyst",
+  "CRM Developer", "ERP Consultant", "Technical Lead", "Engineering Manager",
+  "Software Architect", "Solution Engineer", "AI Research Engineer", "Deep Learning Engineer",
+  "Data Architect", "Database Engineer", "Web Developer", "Technical Program Manager", "Other"
+];
+
 const CoverLetterPage = () => {
   const [resumes, setResumes] = useState([]);
   const [selectedResumeId, setSelectedResumeId] = useState('');
@@ -102,17 +140,44 @@ const CoverLetterPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [clEditedText, setClEditedText] = useState('');
 
+  // Upload states
+  const [uploadedFileName, setUploadedFileName] = useState('');
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+
+  // Dropdown states
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const [companySearchQuery, setCompanySearchQuery] = useState('');
+  const [isCompanyOtherSelected, setIsCompanyOtherSelected] = useState(false);
+
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [roleSearchQuery, setRoleSearchQuery] = useState('');
+  const [isRoleOtherSelected, setIsRoleOtherSelected] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchResumes();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.company-dropdown-container')) {
+        setIsCompanyDropdownOpen(false);
+      }
+      if (!event.target.closest('.role-dropdown-container')) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const fetchResumes = async () => {
     try {
       const res = await resumeAPI.getAll();
       if (res.success) {
-        setResumes(res.data.resumes || []);
+        const list = res.data.resumes || [];
+        setResumes(list);
       }
     } catch (err) {
       console.error('Failed to fetch resumes:', err);
@@ -142,6 +207,55 @@ const CoverLetterPage = () => {
     }
   };
 
+  const handleUploadCLResume = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      const allowedTypes = ['.pdf', '.doc', '.docx'];
+      const ext = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'));
+      if (!allowedTypes.includes(ext)) {
+        alert('Please upload a PDF, DOC, or DOCX file');
+        return;
+      }
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
+      setIsUploadingFile(true);
+      try {
+        const formData = new FormData();
+        formData.append('resume', selectedFile);
+
+        const uploadRes = await resumeAPI.upload(formData);
+        const resData = uploadRes?.data ?? uploadRes;
+        
+        if (resData?.resume) {
+          const newResume = resData.resume;
+          setResumes(prev => [newResume, ...prev]);
+          setSelectedResumeId(newResume.id || newResume._id);
+          setUploadedFileName(selectedFile.name);
+          
+          setIsLoadingResumeText(true);
+          const detailRes = await resumeAPI.getOne(newResume.id || newResume._id);
+          if (detailRes.success && detailRes.data?.resume) {
+            setResumeText(detailRes.data.resume.resumeText || '');
+          }
+        }
+      } catch (err) {
+        console.error('File upload failed:', err);
+        alert(err?.message || 'Failed to upload resume file.');
+      } finally {
+        setIsUploadingFile(false);
+      }
+    }
+  };
+
+  const handleRemoveUploadedFile = () => {
+    setUploadedFileName('');
+    setSelectedResumeId('');
+    setResumeText('');
+  };
+
   const handleGenerateCL = async (e) => {
     if (e) e.preventDefault();
     setIsGenerating(true);
@@ -156,7 +270,11 @@ const CoverLetterPage = () => {
         resumeId: selectedResumeId || undefined
       };
 
-      const res = await resumeAPI.generateCoverLetterStandalone(payload);
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 10000));
+      const apiPromise = resumeAPI.generateCoverLetterStandalone(payload);
+
+      const [res] = await Promise.all([apiPromise, delayPromise]);
+
       if (res?.success && res?.coverLetter) {
         setClResult(res.coverLetter);
         setClEditedText(res.coverLetter);
@@ -223,10 +341,10 @@ const CoverLetterPage = () => {
             className="mb-8"
           >
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 font-heading font-sans">
-              📄 Standalone Cover Letter Generator
+              Cover Letter Generator
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Generate and customize a personalized, ATS-friendly cover letter. Resume upload is completely optional!
+              Generate personalized cover letters tailored to your resume and target role.
             </p>
           </motion.div>
 
@@ -240,9 +358,61 @@ const CoverLetterPage = () => {
                 </h2>
 
                 <form onSubmit={handleGenerateCL} className="space-y-4">
+                  {/* Optional Resume Upload Area */}
+                  <div className="p-4 bg-slate-50/50 dark:bg-charcoal-900/40 rounded-2xl border border-slate-200 dark:border-charcoal-700 shadow-sm mb-4">
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                      Upload Resume
+                    </label>
+                    {uploadedFileName ? (
+                      <div className="flex items-center justify-between p-2.5 bg-white dark:bg-charcoal-800 rounded-xl border border-slate-200 dark:border-charcoal-700">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                            <FileText className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                          </div>
+                          <span className="text-xs text-gray-700 dark:text-gray-300 truncate font-semibold">
+                            {uploadedFileName}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveUploadedFile}
+                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <input
+                          type="file"
+                          id="cl-resume-upload"
+                          accept=".pdf,.doc,.docx"
+                          onChange={handleUploadCLResume}
+                          className="hidden"
+                          disabled={isUploadingFile}
+                        />
+                        <label
+                          htmlFor="cl-resume-upload"
+                          className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 dark:border-charcoal-700 rounded-xl bg-white/50 dark:bg-charcoal-800/50 cursor-pointer hover:border-indigo-500 transition-all"
+                        >
+                          <Upload className="w-6 h-6 text-indigo-500 mb-1" />
+                          <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                            {isUploadingFile ? 'Uploading...' : 'Choose File'}
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2">
+                      Upload a resume to personalize your cover letter further.
+                    </p>
+                  </div>
+
+                  {/* Or select stored resume */}
+                  <div className="text-center text-[10px] font-bold text-gray-400 dark:text-gray-500 my-3">— OR —</div>
+
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                      Select Stored Resume (Optional)
+                      Select Stored Resume
                     </label>
                     <select
                       value={selectedResumeId}
@@ -252,58 +422,183 @@ const CoverLetterPage = () => {
                     >
                       <option value="">-- Generate without stored resume --</option>
                       {resumes.map(r => (
-                        <option key={r.id} value={r.id}>
+                        <option key={r.id || r._id} value={r.id || r._id}>
                           {r.original_filename || r.filename}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {!selectedResumeId && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                        Paste Resume Text (Optional)
-                      </label>
-                      <textarea
-                        rows="4"
-                        value={resumeText}
-                        onChange={(e) => setResumeText(e.target.value)}
-                        placeholder="Paste your resume details here to tailor achievements and skills..."
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-                      />
-                    </div>
-                  )}
-
                   {selectedResumeId && isLoadingResumeText && (
-                    <div className="text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 animate-pulse">
+                    <div className="text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 animate-pulse mt-1">
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Loading resume contents...
                     </div>
                   )}
 
-                  <div>
+                  <div className="company-dropdown-container">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                       Company Name
                     </label>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="e.g. Google, Stripe"
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-                    />
+                    {isCompanyOtherSelected ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          placeholder="Enter Company Name"
+                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCompanyOtherSelected(false);
+                            setCompanyName('');
+                            setCompanySearchQuery('');
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                        >
+                          Use List
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                        >
+                          <span className="truncate">{companyName || "Select Company"}</span>
+                          <span className="text-gray-400">▼</span>
+                        </button>
+                        {isCompanyDropdownOpen && (
+                          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-800 border border-slate-200 dark:border-charcoal-700 rounded-xl shadow-xl p-2 flex flex-col gap-2">
+                            <input
+                              type="text"
+                              value={companySearchQuery}
+                              onChange={(e) => setCompanySearchQuery(e.target.value)}
+                              placeholder="Search company..."
+                              className="w-full px-3 py-1.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                              autoFocus
+                            />
+                            <div className="max-h-48 overflow-y-auto space-y-0.5">
+                              {(() => {
+                                const filtered = COMPANIES.filter(c => 
+                                  c.toLowerCase().includes(companySearchQuery.toLowerCase())
+                                );
+                                if (filtered.length === 0) {
+                                  return (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 p-2 text-center">
+                                      No matches found. Select "Other" to type.
+                                    </div>
+                                  );
+                                }
+                                return filtered.map(c => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => {
+                                      if (c === "Other") {
+                                        setIsCompanyOtherSelected(true);
+                                        setCompanyName('');
+                                      } else {
+                                        setCompanyName(c);
+                                      }
+                                      setIsCompanyDropdownOpen(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
+                                  >
+                                    {c}
+                                  </button>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <div>
+                  <div className="role-dropdown-container">
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                       Role Title
                     </label>
-                    <input
-                      type="text"
-                      value={roleTitle}
-                      onChange={(e) => setRoleTitle(e.target.value)}
-                      placeholder="e.g. Senior Frontend Engineer"
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-                    />
+                    {isRoleOtherSelected ? (
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={roleTitle}
+                          onChange={(e) => setRoleTitle(e.target.value)}
+                          placeholder="Enter Job Role"
+                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsRoleOtherSelected(false);
+                            setRoleTitle('');
+                            setRoleSearchQuery('');
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                        >
+                          Use List
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                        >
+                          <span className="truncate">{roleTitle || "Select Job Role"}</span>
+                          <span className="text-gray-400">▼</span>
+                        </button>
+                        {isRoleDropdownOpen && (
+                          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-800 border border-slate-200 dark:border-charcoal-700 rounded-xl shadow-xl p-2 flex flex-col gap-2">
+                            <input
+                              type="text"
+                              value={roleSearchQuery}
+                              onChange={(e) => setRoleSearchQuery(e.target.value)}
+                              placeholder="Search job role..."
+                              className="w-full px-3 py-1.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                              autoFocus
+                            />
+                            <div className="max-h-48 overflow-y-auto space-y-0.5">
+                              {(() => {
+                                const filtered = ROLES.filter(r => 
+                                  r.toLowerCase().includes(roleSearchQuery.toLowerCase())
+                                );
+                                if (filtered.length === 0) {
+                                  return (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 p-2 text-center">
+                                      No matches found. Select "Other" to type.
+                                    </div>
+                                  );
+                                }
+                                return filtered.map(r => (
+                                  <button
+                                    key={r}
+                                    type="button"
+                                    onClick={() => {
+                                      if (r === "Other") {
+                                        setIsRoleOtherSelected(true);
+                                        setRoleTitle('');
+                                      } else {
+                                        setRoleTitle(r);
+                                      }
+                                      setIsRoleDropdownOpen(false);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
+                                  >
+                                    {r}
+                                  </button>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -360,7 +655,7 @@ const CoverLetterPage = () => {
 
             {/* Output Editor (Right) */}
             <div className="md:col-span-7 lg:col-span-8">
-              <div className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[550px] flex flex-col justify-between">
+              <div className={`glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[550px] flex flex-col justify-between${isGenerating ? ' rotating-neon-border' : ''}`}>
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 dark:border-charcoal-700 pb-4 mb-6">
                     <div>
@@ -450,7 +745,7 @@ const CoverLetterPage = () => {
                         <Sparkles className="w-6 h-6 text-cyan-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                       </div>
                       <p className="text-gray-600 dark:text-gray-400 font-medium">
-                        Analyzing configuration and tailoring cover letter...
+                        Analyzing configuration and tailoring cover letter<span className="loading-dots"></span>
                       </p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 max-w-sm">
                         Injecting relevant achievements, matching tone parameters, and formatting output.

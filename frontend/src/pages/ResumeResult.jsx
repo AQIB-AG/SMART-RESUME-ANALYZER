@@ -125,6 +125,44 @@ const printPdf = (title, htmlContent) => {
   }, 300);
 };
 
+const COMPANIES = [
+  "Tata Consultancy Services", "Infosys", "Wipro", "HCLTech", "Tech Mahindra",
+  "Reliance Industries", "Tata Steel", "Tata Motors", "Larsen & Toubro", "Mahindra & Mahindra",
+  "State Bank of India", "ICICI Bank", "HDFC Bank", "Axis Bank", "Bharat Petroleum",
+  "Indian Oil Corporation", "Oil and Natural Gas Corporation", "Coal India", "Adani Enterprises",
+  "Adani Ports and Special Economic Zone", "Asian Paints", "Hindustan Unilever", "ITC Limited",
+  "Maruti Suzuki", "Bajaj Finserv", "Bajaj Auto", "UltraTech Cement", "JSW Steel",
+  "Sun Pharmaceutical Industries", "Dr. Reddy's Laboratories", "Other"
+];
+
+const ROLES = [
+  "Software Engineer", "Software Developer", "Full Stack Developer", "Frontend Developer",
+  "Backend Developer", "MERN Stack Developer", "MEAN Stack Developer", "Java Developer",
+  "Python Developer", ".NET Developer", "PHP Developer", "React Developer",
+  "Angular Developer", "Node.js Developer", "Mobile App Developer", "Android Developer",
+  "iOS Developer", "Flutter Developer", "React Native Developer", "DevOps Engineer",
+  "Site Reliability Engineer", "Cloud Engineer", "Cloud Architect", "Data Engineer",
+  "Data Analyst", "Business Analyst", "Data Scientist", "Machine Learning Engineer",
+  "AI Engineer", "Generative AI Engineer", "Prompt Engineer", "NLP Engineer",
+  "Computer Vision Engineer", "MLOps Engineer", "Cybersecurity Analyst", "Ethical Hacker",
+  "Security Engineer", "Network Engineer", "Database Administrator", "SQL Developer",
+  "Blockchain Developer", "SAP Consultant", "Salesforce Developer", "Salesforce Administrator",
+  "UI Designer", "UX Designer", "Product Designer", "Product Manager",
+  "Project Manager", "Scrum Master", "QA Engineer", "Automation Tester",
+  "Manual Tester", "Performance Tester", "Embedded Systems Engineer", "IoT Engineer",
+  "ERP Developer", "Technical Support Engineer", "Systems Engineer", "Application Support Engineer",
+  "Linux Administrator", "Windows Administrator", "Platform Engineer", "Solutions Architect",
+  "Enterprise Architect", "Big Data Engineer", "BI Developer", "Power BI Developer",
+  "Tableau Developer", "Robotics Engineer", "AR/VR Developer", "Game Developer",
+  "Firmware Engineer", "Site Engineer", "Release Engineer", "Build Engineer",
+  "Infrastructure Engineer", "API Developer", "Integration Engineer", "Digital Transformation Consultant",
+  "IT Consultant", "Technology Analyst", "Technology Consultant", "Risk Analyst",
+  "SOC Analyst", "Cloud Security Engineer", "Penetration Tester", "Information Security Analyst",
+  "CRM Developer", "ERP Consultant", "Technical Lead", "Engineering Manager",
+  "Software Architect", "Solution Engineer", "AI Research Engineer", "Deep Learning Engineer",
+  "Data Architect", "Database Engineer", "Web Developer", "Technical Program Manager", "Other"
+];
+
 const ROLE_GROUPS = [
   {
     category: "Software Development",
@@ -220,10 +258,18 @@ const ResumeResult = () => {
   const [isEditingCL, setIsEditingCL] = useState(false);
   const [clEditedText, setClEditedText] = useState('');
 
-  // Mock Interview states
-  const [intType, setIntType] = useState('Technical');
-  const [intDifficulty, setIntDifficulty] = useState('Medium');
-  const [intNumber, setIntNumber] = useState(5);
+  // Dropdown states for cover letter
+  const [clCompanyDropdownOpen, setClCompanyDropdownOpen] = useState(false);
+  const [clCompanySearchQuery, setClCompanySearchQuery] = useState('');
+  const [clCompanyOtherSelected, setClCompanyOtherSelected] = useState(false);
+
+  const [clRoleDropdownOpen, setClRoleDropdownOpen] = useState(false);
+  const [clRoleSearchQuery, setClRoleSearchQuery] = useState('');
+  const [clRoleOtherSelected, setClRoleOtherSelected] = useState(false);
+
+  const [intType, setIntType] = useState('');
+  const [intDifficulty, setIntDifficulty] = useState('');
+  const [intNumber, setIntNumber] = useState(null);
   const [isGeneratingQ, setIsGeneratingQ] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [qError, setQError] = useState(null);
@@ -232,6 +278,7 @@ const ResumeResult = () => {
   const [targetRole, setTargetRole] = useState('');
   const [roleSearchQuery, setRoleSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({ role: false, type: false, difficulty: false, count: false });
 
   useEffect(() => {
     if (!id) {
@@ -248,6 +295,19 @@ const ResumeResult = () => {
       setActiveTab(tab);
     }
   }, [location.search]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.cl-company-dropdown-container')) {
+        setClCompanyDropdownOpen(false);
+      }
+      if (!event.target.closest('.cl-role-dropdown-container')) {
+        setClRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchResumeData = async () => {
     setIsLoading(true);
@@ -293,12 +353,14 @@ const ResumeResult = () => {
     setIsGeneratingCL(true);
     setClError(null);
     try {
-      const res = await resumeAPI.generateCoverLetter(id, {
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 10000));
+      const apiPromise = resumeAPI.generateCoverLetter(id, {
         companyName: clCompany,
         roleTitle: clRole,
         jobDescription: clJobDesc,
         tone: clTone
       });
+      const [res] = await Promise.all([apiPromise, delayPromise]);
       if (res?.success && res?.coverLetter) {
         setClResult(res.coverLetter);
         setClEditedText(res.coverLetter);
@@ -318,6 +380,27 @@ const ResumeResult = () => {
   // Generate Interview Questions Handler
   const handleGenerateQuestions = async (e) => {
     if (e) e.preventDefault();
+
+    // Validate required fields
+    const missing = {
+      role: !targetRole.trim(),
+      type: !intType,
+      difficulty: !intDifficulty,
+      count: intNumber === null
+    };
+    setValidationErrors(missing);
+
+    const missingFields = [];
+    if (missing.role) missingFields.push('Target Job Role');
+    if (missing.type) missingFields.push('Interview Type');
+    if (missing.difficulty) missingFields.push('Difficulty Level');
+    if (missing.count) missingFields.push('Number of Questions');
+
+    if (missingFields.length > 0) {
+      setQError(`Please select the following before generating: ${missingFields.join(', ')}.`);
+      return;
+    }
+
     setIsGeneratingQ(true);
     setQError(null);
     try {
@@ -326,14 +409,8 @@ const ResumeResult = () => {
       const difficulty = intDifficulty;
       const questionCount = intNumber;
 
-      console.log({
-        domain,
-        interviewType,
-        difficulty,
-        questionCount
-      });
-
-      const res = await resumeAPI.generateInterviewQuestions(id, {
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 3000));
+      const apiPromise = resumeAPI.generateInterviewQuestions(id, {
         domain,
         role: domain,
         targetRole: domain,
@@ -343,6 +420,7 @@ const ResumeResult = () => {
         questionCount,
         number: questionCount
       });
+      const [res] = await Promise.all([apiPromise, delayPromise]);
       if (res?.success && res?.questions) {
         setQuestions(res.questions);
         setQMethod(res.method || 'ai');
@@ -854,30 +932,166 @@ const ResumeResult = () => {
                     </h2>
                     
                     <form onSubmit={handleGenerateCL} className="space-y-4">
-                      <div>
+                      <div className="cl-company-dropdown-container">
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                          Company Name (optional)
+                          Company Name
                         </label>
-                        <input
-                          type="text"
-                          value={clCompany}
-                          onChange={(e) => setClCompany(e.target.value)}
-                          placeholder="e.g. Google, Stripe"
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-                        />
+                        {clCompanyOtherSelected ? (
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={clCompany}
+                              onChange={(e) => setClCompany(e.target.value)}
+                              placeholder="Enter Company Name"
+                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setClCompanyOtherSelected(false);
+                                setClCompany('');
+                                setClCompanySearchQuery('');
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                            >
+                              Use List
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setClCompanyDropdownOpen(!clCompanyDropdownOpen)}
+                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                            >
+                              <span className="truncate">{clCompany || "Select Company"}</span>
+                              <span className="text-gray-400">▼</span>
+                            </button>
+                            {clCompanyDropdownOpen && (
+                              <div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-800 border border-slate-200 dark:border-charcoal-700 rounded-xl shadow-xl p-2 flex flex-col gap-2">
+                                <input
+                                  type="text"
+                                  value={clCompanySearchQuery}
+                                  onChange={(e) => setClCompanySearchQuery(e.target.value)}
+                                  placeholder="Search company..."
+                                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                                  autoFocus
+                                />
+                                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                                  {COMPANIES.filter(c => 
+                                    c.toLowerCase().includes(clCompanySearchQuery.toLowerCase())
+                                  ).length === 0 ? (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 p-2 text-center">
+                                      No matches found. Select "Other" to type.
+                                    </div>
+                                  ) : (
+                                    COMPANIES.filter(c => 
+                                      c.toLowerCase().includes(clCompanySearchQuery.toLowerCase())
+                                    ).map(c => (
+                                      <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => {
+                                          if (c === "Other") {
+                                            setClCompanyOtherSelected(true);
+                                            setClCompany('');
+                                          } else {
+                                            setClCompany(c);
+                                          }
+                                          setClCompanyDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
+                                      >
+                                        {c}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
-                      <div>
+                      <div className="cl-role-dropdown-container">
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                          Role Title (optional)
+                          Role Title
                         </label>
-                        <input
-                          type="text"
-                          value={clRole}
-                          onChange={(e) => setClRole(e.target.value)}
-                          placeholder="e.g. Senior Frontend Engineer"
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
-                        />
+                        {clRoleOtherSelected ? (
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={clRole}
+                              onChange={(e) => setClRole(e.target.value)}
+                              placeholder="Enter Job Role"
+                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setClRoleOtherSelected(false);
+                                setClRole('');
+                                setClRoleSearchQuery('');
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                            >
+                              Use List
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setClRoleDropdownOpen(!clRoleDropdownOpen)}
+                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                            >
+                              <span className="truncate">{clRole || "Select Job Role"}</span>
+                              <span className="text-gray-400">▼</span>
+                            </button>
+                            {clRoleDropdownOpen && (
+                              <div className="absolute z-50 w-full mt-1 bg-white dark:bg-charcoal-800 border border-slate-200 dark:border-charcoal-700 rounded-xl shadow-xl p-2 flex flex-col gap-2">
+                                <input
+                                  type="text"
+                                  value={clRoleSearchQuery}
+                                  onChange={(e) => setClRoleSearchQuery(e.target.value)}
+                                  placeholder="Search job role..."
+                                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
+                                  autoFocus
+                                />
+                                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                                  {ROLES.filter(r => 
+                                    r.toLowerCase().includes(clRoleSearchQuery.toLowerCase())
+                                  ).length === 0 ? (
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 p-2 text-center">
+                                      No matches found. Select "Other" to type.
+                                    </div>
+                                  ) : (
+                                    ROLES.filter(r => 
+                                      r.toLowerCase().includes(clRoleSearchQuery.toLowerCase())
+                                    ).map(r => (
+                                      <button
+                                        key={r}
+                                        type="button"
+                                        onClick={() => {
+                                          if (r === "Other") {
+                                            setClRoleOtherSelected(true);
+                                            setClRole('');
+                                          } else {
+                                            setClRole(r);
+                                          }
+                                          setClRoleDropdownOpen(false);
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
+                                      >
+                                        {r}
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -934,7 +1148,7 @@ const ResumeResult = () => {
 
                 {/* Cover Letter Output editor (Right) */}
                 <div className="md:col-span-7 lg:col-span-8">
-                  <div className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[500px] flex flex-col justify-between">
+                  <div className={`glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[500px] flex flex-col justify-between${isGeneratingCL ? ' rotating-neon-border' : ''}`}>
                     <div>
                       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 dark:border-charcoal-700 pb-4 mb-6">
                         <div>
@@ -1024,7 +1238,7 @@ const ResumeResult = () => {
                             <Sparkles className="w-6 h-6 text-cyan-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" />
                           </div>
                           <p className="text-gray-600 dark:text-gray-400 font-medium">
-                            Analyzing parsed resume data and target metrics...
+                            Analyzing parsed resume data and target metrics<span className="loading-dots"></span>
                           </p>
                           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 max-w-sm">
                             Tailoring key achievements, sorting matched keywords, and preparing formatting parameters.
@@ -1093,9 +1307,10 @@ const ResumeResult = () => {
                           onChange={(e) => {
                             setRoleSearchQuery(e.target.value);
                             setTargetRole(e.target.value);
+                            if (e.target.value.trim()) setValidationErrors(prev => ({ ...prev, role: false }));
                           }}
                           placeholder="Search or type a target role..."
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrors.role ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                         />
                         
                         {isDropdownOpen && (
@@ -1125,6 +1340,7 @@ const ResumeResult = () => {
                                           setTargetRole(role);
                                           setRoleSearchQuery(role);
                                           setIsDropdownOpen(false);
+                                          setValidationErrors(prev => ({ ...prev, role: false }));
                                         }}
                                         className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg cursor-pointer transition-colors"
                                       >
@@ -1153,15 +1369,15 @@ const ResumeResult = () => {
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Interview Type
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className={`grid grid-cols-3 gap-2 rounded-xl p-1 transition-all ${validationErrors.type ? 'ring-2 ring-red-500' : ''}`}>
                           {['Technical', 'HR', 'Mixed'].map(type => (
                             <button
                               key={type}
                               type="button"
-                              onClick={() => setIntType(type)}
+                              onClick={() => { setIntType(prev => prev === type ? '' : type); setValidationErrors(prev => ({ ...prev, type: false })); }}
                               className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all ${
                                 intType === type
-                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                  ? 'bg-cyan-600 text-white border-cyan-600 dark:bg-cyan-500 dark:border-cyan-500 shadow-md'
                                   : 'bg-slate-50 dark:bg-charcoal-900 border-slate-200 dark:border-charcoal-700 text-gray-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-charcoal-800'
                               }`}
                             >
@@ -1175,15 +1391,19 @@ const ResumeResult = () => {
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Difficulty Level
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className={`grid grid-cols-3 gap-2 rounded-xl p-1 transition-all ${validationErrors.difficulty ? 'ring-2 ring-red-500' : ''}`}>
                           {['Easy', 'Medium', 'Hard'].map(lvl => (
                             <button
                               key={lvl}
                               type="button"
-                              onClick={() => setIntDifficulty(lvl)}
+                              onClick={() => { setIntDifficulty(prev => prev === lvl ? '' : lvl); setValidationErrors(prev => ({ ...prev, difficulty: false })); }}
                               className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all ${
                                 intDifficulty === lvl
-                                  ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                                  ? lvl === 'Easy'
+                                    ? 'bg-green-600 text-white border-green-600 dark:bg-green-500 dark:border-green-500 shadow-md'
+                                    : lvl === 'Medium'
+                                    ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                                    : 'bg-red-600 text-white border-red-600 dark:bg-red-500 dark:border-red-500 shadow-md'
                                   : 'bg-slate-50 dark:bg-charcoal-900 border-slate-200 dark:border-charcoal-700 text-gray-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-charcoal-800'
                               }`}
                             >
@@ -1197,15 +1417,15 @@ const ResumeResult = () => {
                         <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                           Number of Questions
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className={`grid grid-cols-3 gap-2 rounded-xl p-1 transition-all ${validationErrors.count ? 'ring-2 ring-red-500' : ''}`}>
                           {[5, 10, 15].map(num => (
                             <button
                               key={num}
                               type="button"
-                              onClick={() => setIntNumber(num)}
+                              onClick={() => { setIntNumber(prev => prev === num ? null : num); setValidationErrors(prev => ({ ...prev, count: false })); }}
                               className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all ${
                                 intNumber === num
-                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                  ? 'bg-purple-600 text-white border-purple-600 dark:bg-purple-500 dark:border-purple-500 shadow-md'
                                   : 'bg-slate-50 dark:bg-charcoal-900 border-slate-200 dark:border-charcoal-700 text-gray-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-charcoal-800'
                               }`}
                             >
@@ -1240,7 +1460,7 @@ const ResumeResult = () => {
 
                 {/* Question Output Cards (Right) */}
                 <div className="md:col-span-7 lg:col-span-8">
-                  <div className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[500px] flex flex-col justify-between">
+                  <div className={`glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50 min-h-[500px] flex flex-col justify-between${isGeneratingQ ? ' rotating-neon-border' : ''}`}>
                     <div>
                       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 dark:border-charcoal-700 pb-4 mb-6">
                         <div>
@@ -1305,7 +1525,7 @@ const ResumeResult = () => {
                             <Zap className="w-6 h-6 text-amber-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-bounce" />
                           </div>
                           <p className="text-gray-600 dark:text-gray-400 font-medium">
-                            Synthesizing skills, experience keywords, and project targets...
+                            Synthesizing skills, experience keywords, and project targets<span className="loading-dots"></span>
                           </p>
                           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 max-w-sm">
                             Extracting language frameworks, formatting interview outlines, and establishing key expected answers.
