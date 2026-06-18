@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { analysisAPI } from '../services/api';
-import { Upload as UploadIcon, FileText, CheckCircle, X, Cloud, Zap, Target, TrendingUp, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { Upload as UploadIcon, FileText, CheckCircle, X, Cloud, Zap, Target, TrendingUp, ArrowRight, Check, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const MIN_LOADING_TIME = 10000;
@@ -18,6 +18,89 @@ const Upload = () => {
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  const recruiterReview = result?.recruiterReview ?? null;
+
+  const getFallbackRecruiterReview = () => {
+    if (!result) return null;
+    const score = result.ats_score ?? result.atsScore ?? result.score ?? 0;
+    const lowercaseText = (result.text || file?.name || '').toLowerCase();
+    const matchedSkills = result.skills ?? [];
+    const missingSkills = result.skillGaps ?? result.skill_gaps ?? result.missingKeywords ?? [];
+    
+    // Dynamic Strengths
+    const strengths = [];
+    if (score >= 75) {
+      strengths.push('Overall profile demonstrates robust readiness for core engineering roles.');
+    }
+    if (matchedSkills.length >= 8) {
+      strengths.push(`Strong technology breadth with solid exposure to ${matchedSkills.slice(0, 4).join(', ')}.`);
+    } else if (matchedSkills.length >= 4) {
+      strengths.push(`Good foundation in key domain tools including ${matchedSkills.slice(0, 3).join(', ')}.`);
+    } else {
+      strengths.push('Possesses fundamental knowledge of industry-standard tools.');
+    }
+    if (lowercaseText.includes('experience') || lowercaseText.includes('employment') || lowercaseText.includes('work history') || lowercaseText.includes('experience:')) {
+      strengths.push('Professional experience section is present and structured with traditional timelines.');
+    }
+    if (lowercaseText.includes('project') || lowercaseText.includes('portfolio') || lowercaseText.includes('github.com')) {
+      strengths.push('Showcases practical application of skills through hands-on project examples.');
+    }
+    if (strengths.length < 2) {
+      strengths.push('Clear contact details and structural sections present.');
+      strengths.push('Basic technical toolkit is present.');
+    }
+
+    // Dynamic Weaknesses
+    const weaknesses = [];
+    if (matchedSkills.length < 6) {
+      weaknesses.push('Limited depth in modern frameworks and core library keywords.');
+    }
+    if (missingSkills.length > 3) {
+      weaknesses.push(`Noticeable skill gaps in key role requirements: ${missingSkills.slice(0, 3).join(', ')}.`);
+    }
+    if (!lowercaseText.includes('certif')) {
+      weaknesses.push('No professional certifications listed to validate domain expertise.');
+    }
+    if (weaknesses.length < 2) {
+      weaknesses.push('Details on soft skills application could be highlighted more explicitly.');
+      weaknesses.push('Project descriptions can emphasize target design and system-level challenges.');
+    }
+
+    // Dynamic Improvements
+    const improvements = [];
+    if (weaknesses.some(w => w.includes('gaps') || w.includes('frameworks'))) {
+      improvements.push(`Study and add fundamental proficiencies in: ${missingSkills.slice(0, 3).join(', ') || 'modern target framework tools'}.`);
+    }
+    if (weaknesses.some(w => w.includes('certifications'))) {
+      improvements.push('Add relevant professional certifications (e.g. AWS Certified Developer, Scrum Master, or equivalent).');
+    }
+    if (improvements.length < 2) {
+      improvements.push('Tailor keywords to match target roles to enhance semantic compatibility.');
+      improvements.push('Use active action verbs (e.g. "Engineered", "Optimized", "Architected") to begin bullet points.');
+    }
+
+    // Round Chances
+    const atsScreening = Math.round(score);
+    const technicalRound = Math.max(30, Math.min(95, Math.round(score * 0.9 + (matchedSkills.length > 5 ? 10 : -10))));
+    const hrRound = Math.max(40, Math.min(95, Math.round(score * 0.85 + 10)));
+    const overall = Math.round((atsScreening + technicalRound + hrRound) / 3);
+
+    return {
+      strengths: strengths.slice(0, 4),
+      weaknesses: weaknesses.slice(0, 4),
+      improvements: improvements.slice(0, 4),
+      chances: {
+        atsScreening,
+        technicalRound,
+        hrRound,
+        overall
+      },
+      method: 'fallback'
+    };
+  };
+
+  const finalReview = recruiterReview || getFallbackRecruiterReview();
 
   const analyzingSteps = [
     'Analyzing your resume with AI… This may take a few moments.',
@@ -420,6 +503,146 @@ const Upload = () => {
                   </motion.div>
                 )}
 
+                {/* AI Recruiter Review Card */}
+                {finalReview && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.28 }}
+                    className="glass bg-white/50 dark:bg-charcoal-700/50 backdrop-blur-sm rounded-2xl p-6 border border-white/30 dark:border-charcoal-600/50"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg">
+                          <Sparkles className="w-5 h-5 text-white" />
+                        </div>
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white font-heading">
+                          🤖 AI Recruiter Review
+                        </h4>
+                      </div>
+                      {finalReview.method === 'ai' && (
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
+                          AI Generated
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      A comprehensive recruiter-style evaluation detailing candidate strengths, areas of improvement, and expected performance across interview rounds.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Left: Strengths, Weaknesses, Improvements */}
+                      <div className="space-y-4">
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-400 block mb-1">
+                            Strengths
+                          </span>
+                          <ul className="space-y-1">
+                            {finalReview.strengths.map((str, idx) => (
+                              <li key={idx} className="flex items-start gap-1.5 text-gray-700 dark:text-gray-300 text-sm leading-normal">
+                                <span className="text-green-500">•</span>
+                                <span>{str}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block mb-1">
+                            Areas for Critique
+                          </span>
+                          <ul className="space-y-1">
+                            {finalReview.weaknesses.map((weak, idx) => (
+                              <li key={idx} className="flex items-start gap-1.5 text-gray-700 dark:text-gray-300 text-sm leading-normal">
+                                <span className="text-amber-500">•</span>
+                                <span>{weak}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-400 block mb-1">
+                            Recommended Improvements
+                          </span>
+                          <ul className="space-y-1">
+                            {finalReview.improvements.map((imp, idx) => (
+                              <li key={idx} className="flex items-start gap-1.5 text-gray-700 dark:text-gray-300 text-sm leading-normal">
+                                <span className="text-indigo-500">•</span>
+                                <span>{imp}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Right: Round Chances */}
+                      <div className="space-y-4 bg-gray-50/50 dark:bg-charcoal-700/30 p-5 rounded-xl border border-gray-100 dark:border-charcoal-600/30 flex flex-col justify-center">
+                        <span className="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 block">
+                          Estimated Interview Chances
+                        </span>
+
+                        {/* ATS Screening */}
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-600 dark:text-gray-400">ATS Screening Match</span>
+                            <span className="font-semibold text-indigo-600 dark:text-indigo-400">{finalReview.chances.atsScreening}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full"
+                              style={{ width: `${finalReview.chances.atsScreening}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Technical Round */}
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-600 dark:text-gray-400">Technical Round Readiness</span>
+                            <span className="font-semibold text-purple-600 dark:text-purple-400">{finalReview.chances.technicalRound}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-purple-500 to-purple-600 h-full rounded-full"
+                              style={{ width: `${finalReview.chances.technicalRound}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* HR Round */}
+                        <div>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-600 dark:text-gray-400">HR & Behavioral Fit</span>
+                            <span className="font-semibold text-emerald-600 dark:text-emerald-400">{finalReview.chances.hrRound}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-full rounded-full"
+                              style={{ width: `${finalReview.chances.hrRound}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Overall Chance */}
+                        <div className="pt-3 border-t border-gray-200 dark:border-charcoal-600">
+                          <div className="flex justify-between text-xs font-bold mb-1">
+                            <span className="text-gray-900 dark:text-white">Overall Probability</span>
+                            <span className="text-indigo-600 dark:text-indigo-400">{finalReview.chances.overall}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-2 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 h-full rounded-full"
+                              style={{ width: `${finalReview.chances.overall}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Feedback / AI explanation - always render */}
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -502,81 +725,83 @@ const Upload = () => {
           </motion.div>
 
           {/* Preview Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 dark:border-charcoal-700/50"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-lg">
-                <Target className="w-6 h-6 text-white" />
+          {!result && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 dark:border-charcoal-700/50"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-gradient-to-r from-indigo-600 to-cyan-500 rounded-lg">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white font-heading">
+                  What Our AI Will Analyze
+                </h2>
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white font-heading">
-                What Our AI Will Analyze
-              </h2>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">ATS Compatibility</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Check if your resume passes ATS filters</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">ATS Compatibility</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Check if your resume passes ATS filters</p>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Keyword Optimization</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Identify missing job-relevant keywords</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Keyword Optimization</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Identify missing job-relevant keywords</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Score Breakdown</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Detailed score with improvement tips</p>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Score Breakdown</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Detailed score with improvement tips</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
-                    <Target className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
+                      <Target className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Skill Gap Analysis</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Identify skills you need to develop</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Skill Gap Analysis</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Identify skills you need to develop</p>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                      <ArrowRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Actionable Recommendations</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Specific steps to improve your resume</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                    <ArrowRight className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Actionable Recommendations</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Specific steps to improve your resume</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                    <FileText className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Format Optimization</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Suggestions for better layout and structure</p>
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                      <FileText className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Format Optimization</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Suggestions for better layout and structure</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          )}
         </div>
       </div>
     </Layout>

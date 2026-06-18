@@ -33,6 +33,7 @@ export const analyzeResume = async (req, res) => {
       strength_areas: resume.strengthAreas,
       ai_explanation: resume.aiExplanation,
       ai_used: resume.aiUsed,
+      recruiterReview: resume.recruiterReview,
       skills: {
         all_skills: resume.skills || [],
         technical_skills: (resume.skills || []).filter(s => technicalList.includes((s || '').toLowerCase())),
@@ -179,6 +180,7 @@ export const getAnalysisSummary = async (req, res) => {
       ai_explanation: resume.aiExplanation,
       ai_used: resume.aiUsed,
       feedback: resume.feedback,
+      recruiterReview: resume.recruiterReview,
       education: [],
       experience: [],
       sections_analysis: {

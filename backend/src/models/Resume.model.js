@@ -55,7 +55,19 @@ const resumeSchema = new mongoose.Schema({
   strengthAreas: [{ type: String }],
   aiExplanation: { type: String },
   aiUsed: { type: Boolean, default: false },
-  jobDescriptionUsed: { type: String }
+  jobDescriptionUsed: { type: String },
+  recruiterReview: {
+    strengths: [{ type: String }],
+    weaknesses: [{ type: String }],
+    improvements: [{ type: String }],
+    chances: {
+      atsScreening: { type: Number },
+      technicalRound: { type: Number },
+      hrRound: { type: Number },
+      overall: { type: Number }
+    },
+    method: { type: String }
+  }
 }, {
   timestamps: true
 });

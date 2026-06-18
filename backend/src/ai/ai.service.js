@@ -4,6 +4,8 @@
  * All AI logic stays in backend; free tier only.
  */
 
+import { generateFeedback } from '../services/ats.service.js';
+
 const HF_API_URL = 'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2';
 const MAX_TEXT_LENGTH = 5120; // ~512 tokens safe for API
 
@@ -169,33 +171,20 @@ function normalizeScore(rawSimilarity, keywordScoreComponent = 0) {
 /**
  * Generate recruiter-style human-readable explanation
  */
-function generateAIExplanation(atsScore, bestFitRole, jobMatchPercentage, strengthAreas, skillGaps, hadJobDescription) {
-  const parts = [];
-
-  if (atsScore >= 80) {
-    parts.push(`Your resume shows strong alignment with ${bestFitRole || 'your target role'}.`);
-  } else if (atsScore >= 60) {
-    parts.push(`Your resume has solid relevance to ${bestFitRole || 'the role'}, with room to strengthen key areas.`);
-  } else if (atsScore >= 40) {
-    parts.push(`Your resume has moderate fit for ${bestFitRole || 'the role'}. Highlighting more relevant experience and skills will improve your score.`);
-  } else {
-    parts.push(`Your resume would benefit from clearer alignment with ${bestFitRole || 'the target role'} and more relevant keywords and experience.`);
-  }
-
-  if (hadJobDescription && jobMatchPercentage != null) {
-    parts.push(`Match to the job description: ${Math.round(jobMatchPercentage)}%.`);
-  }
-
-  if (strengthAreas && strengthAreas.length > 0) {
-    parts.push(`Strengths include: ${strengthAreas.slice(0, 5).join(', ')}.`);
-  }
-
-  if (skillGaps && skillGaps.length > 0) {
-    parts.push(`Consider adding or highlighting: ${skillGaps.slice(0, 5).join(', ')} to improve ATS and recruiter match.`);
-  }
-
-  parts.push('Use clear section headings, quantify achievements where possible, and tailor keywords to the role.');
-  return parts.join(' ');
+function generateAIExplanation(atsScore, bestFitRole, jobMatchPercentage, strengthAreas, skillGaps, hadJobDescription, resumeText = '', keywordDetails = null) {
+  const details = {
+    technicalMatches: strengthAreas?.length || 0,
+    softMatches: keywordDetails?.softMatches || 0,
+    formatMatches: keywordDetails?.formatMatches || 4,
+    totalWords: (resumeText || '').split(/\s+/).length,
+    hasExperienceSection: keywordDetails?.hasExperienceSection ?? (resumeText || '').toLowerCase().includes('experience'),
+    hasEducationSection: keywordDetails?.hasEducationSection ?? (resumeText || '').toLowerCase().includes('education'),
+    hasSkillsSection: keywordDetails?.hasSkillsSection ?? (resumeText || '').toLowerCase().includes('skills'),
+    contactMatches: keywordDetails?.contactMatches || 2,
+    matchedTechnical: strengthAreas || [],
+    experienceYears: keywordDetails?.experienceYears || 0
+  };
+  return generateFeedback(atsScore, details, resumeText);
 }
 
 /**
@@ -330,12 +319,267 @@ export async function analyzeResumeWithAI(resumeText, jobDescription = null, key
     result.jobMatchPercentage,
     result.strengthAreas,
     result.skillGaps,
-    Boolean(jobDescription && jobDescription.trim())
+    Boolean(jobDescription && jobDescription.trim()),
+    resumeText,
+    keywordDetails
   );
   return result;
   } catch (err) {
     console.error('❌ AI FAILED – FALLING BACK TO KEYWORD ATS', err.message);
     return result;
+  }
+}
+
+/**
+ * Generates an intelligent fallback recruiter review locally when AI inference is unavailable.
+ */
+export function generateFallbackRecruiterReview(resumeText, atsScore, skills = [], missingSkills = []) {
+  const score = atsScore || 0;
+  const lowercaseText = (resumeText || '').toLowerCase();
+  
+  // Dynamic Strengths detection
+  const strengths = [];
+  if (score >= 75) {
+    strengths.push('Overall profile demonstrates robust readiness for core engineering roles.');
+  }
+  if (skills.length >= 8) {
+    strengths.push(`Strong technology breadth with solid exposure to ${skills.slice(0, 4).join(', ')}.`);
+  } else if (skills.length >= 4) {
+    strengths.push(`Good foundation in key domain tools including ${skills.slice(0, 3).join(', ')}.`);
+  } else {
+    strengths.push('Possesses fundamental knowledge of industry-standard tools.');
+  }
+
+  if (lowercaseText.includes('experience') || lowercaseText.includes('employment') || lowercaseText.includes('work history') || lowercaseText.includes('experience:')) {
+    strengths.push('Professional experience section is present and structured with traditional timelines.');
+  }
+  if (lowercaseText.includes('project') || lowercaseText.includes('portfolio') || lowercaseText.includes('github.com')) {
+    strengths.push('Showcases practical application of skills through hands-on project examples.');
+  }
+  if (lowercaseText.includes('bachelor') || lowercaseText.includes('master') || lowercaseText.includes('degree') || lowercaseText.includes('university')) {
+    strengths.push('Clear educational background listed, meeting standard academic filter requirements.');
+  }
+  // Guarantee at least 2 strengths
+  if (strengths.length < 2) {
+    strengths.push('Clear contact details and structural sections present.');
+    strengths.push('Basic technical toolkit is present.');
+  }
+
+  // Dynamic Weaknesses detection
+  const weaknesses = [];
+  const matches = (resumeText || '').match(/\b\d+%/g) || (resumeText || '').match(/\$\d+/g) || [];
+  if (matches.length < 2) {
+    weaknesses.push('Lack of quantifiable achievements or metrics to prove professional business impact.');
+  }
+  if (skills.length < 6) {
+    weaknesses.push('Limited depth in modern frameworks and core library keywords.');
+  }
+  if (missingSkills.length > 3) {
+    weaknesses.push(`Noticeable skill gaps in key role requirements: ${missingSkills.slice(0, 3).join(', ')}.`);
+  }
+  if (!lowercaseText.includes('certif')) {
+    weaknesses.push('No professional certifications listed to validate domain expertise.');
+  }
+  if (resumeText && resumeText.length < 1200) {
+    weaknesses.push('The resume content is brief; project and role descriptions could be expanded.');
+  } else if (resumeText && resumeText.length > 5000) {
+    weaknesses.push('The resume is very long; risk of diluting key search matches for ATS systems.');
+  }
+  // Guarantee at least 2 weaknesses
+  if (weaknesses.length < 2) {
+    weaknesses.push('Details on soft skills application could be highlighted more explicitly.');
+    weaknesses.push('Project descriptions can emphasize target design and system-level challenges.');
+  }
+
+  // Dynamic Improvements recommendations
+  const improvements = [];
+  if (weaknesses.some(w => w.includes('quantifiable'))) {
+    improvements.push('Incorporate bullet points with clear numerical metrics (e.g. "reduced latency by 25%", "managed 5 developers").');
+  }
+  if (weaknesses.some(w => w.includes('gaps') || w.includes('frameworks'))) {
+    improvements.push(`Study and add fundamental proficiencies in: ${missingSkills.slice(0, 3).join(', ') || 'modern target framework tools'}.`);
+  }
+  if (weaknesses.some(w => w.includes('certifications'))) {
+    improvements.push('Add relevant professional certifications (e.g. AWS Certified Developer, Scrum Master, or equivalent).');
+  }
+  if (weaknesses.some(w => w.includes('brief'))) {
+    improvements.push('Expand on project challenges, outlining your specific contributions and architectural decisions.');
+  }
+  if (weaknesses.some(w => w.includes('very long'))) {
+    improvements.push('Trim wordy sentences and restrict historical details to keep the resume strictly within 1-2 pages.');
+  }
+  // Guarantee at least 2 improvements
+  if (improvements.length < 2) {
+    improvements.push('Tailor keywords to match target roles to enhance semantic compatibility.');
+    improvements.push('Use active action verbs (e.g. "Engineered", "Optimized", "Architected") to begin bullet points.');
+  }
+
+  // Round Chances Calculation
+  const atsScreening = Math.round(score);
+  const technicalRound = Math.max(30, Math.min(95, Math.round(score * 0.9 + (skills.length > 5 ? 10 : -10))));
+  const hrRound = Math.max(40, Math.min(95, Math.round(score * 0.85 + 10)));
+  const overall = Math.round((atsScreening + technicalRound + hrRound) / 3);
+
+  return {
+    strengths: strengths.slice(0, 4),
+    weaknesses: weaknesses.slice(0, 4),
+    improvements: improvements.slice(0, 4),
+    chances: {
+      atsScreening,
+      technicalRound,
+      hrRound,
+      overall
+    },
+    method: 'fallback'
+  };
+}
+
+/**
+ * Automatically generates a recruiter-style review using Hugging Face Inference API.
+ */
+export async function generateRecruiterReview(resumeText, atsScore, skills = [], missingSkills = [], jobDescription = '') {
+  const token = process.env.HF_TOKEN || process.env.HF_API_KEY;
+  const fallbackResult = generateFallbackRecruiterReview(resumeText, atsScore, skills, missingSkills);
+
+  if (!token) {
+    console.warn('AI: HF_TOKEN not set, returning fallback recruiter review');
+    return fallbackResult;
+  }
+
+  // Build a concise prompt to describe target job context
+  const jdSection = jobDescription ? `Target Job Description:\n${jobDescription.substring(0, 1000)}\n\n` : '';
+  const skillsList = skills.join(', ');
+  const missingSkillsList = missingSkills.slice(0, 6).join(', ');
+
+  const prompt = `You are a Senior Technical Recruiter, ATS Expert, and Career Coach. 
+Analyze the following candidate's resume information and provide a professional, constructive, and realistic evaluation.
+
+ATS Score: ${atsScore}%
+Candidate Skills: ${skillsList}
+Potential Skill Gaps: ${missingSkillsList}
+${jdSection}
+Resume Text (First 3500 chars):
+${resumeText.substring(0, 3500)}
+
+Provide your response in raw JSON format. DO NOT output any markdown tags (like \`\`\`json) or conversational text. Return only the JSON object.
+JSON structure must match this EXACT schema:
+{
+  "strengths": ["string", "string", "string"],
+  "weaknesses": ["string", "string", "string"],
+  "improvements": ["string", "string", "string"],
+  "chances": {
+    "atsScreening": number (between 0 and 100),
+    "technicalRound": number (between 0 and 100),
+    "hrRound": number (between 0 and 100),
+    "overall": number (between 0 and 100)
+  }
+}
+Strengths should highlight specific professional elements.
+Weaknesses should be constructive criticisms.
+Improvements should give actionable advice to fix the weaknesses.
+Round chances must be realistic integers representing percentage likelihood of passing each interview stage.`;
+
+  const models = [
+    'Qwen/Qwen2.5-72B-Instruct',
+    'mistralai/Mistral-7B-Instruct-v0.3',
+    'meta-llama/Llama-3-8B-Instruct'
+  ];
+
+  for (const model of models) {
+    const url = `https://api-inference.huggingface.co/models/${model}`;
+    console.log(`🤖 AI RECRUITER: Trying model ${model}...`);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 800,
+            temperature: 0.7,
+            return_full_text: false
+          },
+          options: {
+            use_cache: false,
+            wait_for_model: true
+          }
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!res.ok) {
+        console.warn(`🤖 AI RECRUITER: Model ${model} failed with status ${res.status}`);
+        continue;
+      }
+
+      const data = await res.json();
+      let text = '';
+      if (Array.isArray(data) && data[0]?.generated_text) {
+        text = data[0].generated_text;
+      } else if (data && typeof data === 'object' && data.generated_text) {
+        text = data.generated_text;
+      } else if (data && typeof data === 'string') {
+        text = data;
+      }
+
+      if (text) {
+        // Clean and parse JSON
+        const parsed = extractJson(text);
+        if (parsed && Array.isArray(parsed.strengths) && Array.isArray(parsed.weaknesses) && Array.isArray(parsed.improvements) && parsed.chances) {
+          console.log(`🤖 AI RECRUITER: Success using model ${model}`);
+          return {
+            strengths: parsed.strengths.slice(0, 5),
+            weaknesses: parsed.weaknesses.slice(0, 5),
+            improvements: parsed.improvements.slice(0, 5),
+            chances: {
+              atsScreening: Number(parsed.chances.atsScreening || atsScore),
+              technicalRound: Number(parsed.chances.technicalRound || 60),
+              hrRound: Number(parsed.chances.hrRound || 70),
+              overall: Number(parsed.chances.overall || 65)
+            },
+            method: 'ai'
+          };
+        }
+      }
+    } catch (err) {
+      console.warn(`🤖 AI RECRUITER: Exception on model ${model}:`, err.message);
+    }
+  }
+
+  console.warn('🤖 AI RECRUITER: AI generation failed. Falling back to local rules.');
+  return fallbackResult;
+}
+
+/**
+ * Clean and parse JSON from string helper
+ */
+function extractJson(text) {
+  const trimmed = text.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch (e) {
+    // Attempt markdown block extraction
+    const blockMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (blockMatch) {
+      try {
+        return JSON.parse(blockMatch[1].trim());
+      } catch (err) {
+        // Fall through
+      }
+    }
+    const firstBracket = trimmed.indexOf('{');
+    const lastBracket = trimmed.lastIndexOf('}');
+    if (firstBracket !== -1 && lastBracket !== -1) {
+      try {
+        return JSON.parse(trimmed.substring(firstBracket, lastBracket + 1));
+      } catch (err) {
+        // Fall through
+      }
+    }
+    return null;
   }
 }
 

@@ -1,6 +1,6 @@
 import Resume from '../models/Resume.model.js';
-import { extractTextFromPdf, performAtsAnalysis } from '../services/ats.service.js';
-import { analyzeResumeWithAI } from '../ai/ai.service.js';
+import { extractTextFromPdf, performAtsAnalysis, getSkillSuggestions } from '../services/ats.service.js';
+import { analyzeResumeWithAI, generateRecruiterReview, generateFallbackRecruiterReview } from '../ai/ai.service.js';
 import path from 'path';
 
 /**
@@ -147,6 +147,31 @@ export const analyzeResumeForATS = async (req, res) => {
       console.log('FINAL SCORE SOURCE:', scoreSource, 'SCORE:', finalScore, '| keywordScore:', keywordScore);
     }
 
+    // Ensure skillGaps is never empty
+    if (!aiResult.skillGaps || aiResult.skillGaps.length < 5) {
+      aiResult.skillGaps = getSkillSuggestions(skills, resumeText);
+    }
+
+    // Generate the AI Recruiter Review automatically
+    let recruiterReview;
+    try {
+      recruiterReview = await generateRecruiterReview(
+        resumeText,
+        finalScore,
+        skills,
+        aiResult.skillGaps || [],
+        jobDescription
+      );
+    } catch (reviewErr) {
+      console.error('❌ AI RECRUITER GENERATION EXCEPTION:', reviewErr.message);
+      recruiterReview = generateFallbackRecruiterReview(
+        resumeText,
+        finalScore,
+        skills,
+        aiResult.skillGaps || []
+      );
+    }
+
     const resume = new Resume({
       name: req.user.first_name + ' ' + req.user.last_name,
       email: req.user.email,
@@ -165,7 +190,8 @@ export const analyzeResumeForATS = async (req, res) => {
       strengthAreas: aiResult.strengthAreas,
       aiExplanation: aiResult.aiExplanation,
       aiUsed: aiResult.aiUsed,
-      jobDescriptionUsed: aiResult.jobDescriptionUsed
+      jobDescriptionUsed: aiResult.jobDescriptionUsed,
+      recruiterReview
     });
 
     const savedResume = await resume.save();
@@ -194,7 +220,8 @@ export const analyzeResumeForATS = async (req, res) => {
       scoreSource,
       ai_explanation: finalFeedback,
       best_fit_role: aiResult.bestFitRole,
-      job_match_percentage: aiResult.jobMatchPercentage
+      job_match_percentage: aiResult.jobMatchPercentage,
+      recruiterReview
     };
     if (aiResult.aiUsed) {
       responsePayload.aiModel = aiModel;

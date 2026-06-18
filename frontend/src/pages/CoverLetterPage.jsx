@@ -128,7 +128,8 @@ const CoverLetterPage = () => {
   // Form states
   const [companyName, setCompanyName] = useState('');
   const [roleTitle, setRoleTitle] = useState('');
-  const [tone, setTone] = useState('Professional');
+  const [tone, setTone] = useState('');
+  const [validationErrors, setValidationErrors] = useState({ companyName: false, roleTitle: false, tone: false });
   const [jobDescription, setJobDescription] = useState('');
 
   // Generation states
@@ -258,6 +259,30 @@ const CoverLetterPage = () => {
 
   const handleGenerateCL = async (e) => {
     if (e) e.preventDefault();
+
+    // Validate required fields
+    const missing = {
+      companyName: !companyName.trim(),
+      roleTitle: !roleTitle.trim(),
+      tone: !tone.trim()
+    };
+    setValidationErrors(missing);
+
+    const missingCount = Object.values(missing).filter(Boolean).length;
+    if (missingCount > 1) {
+      setClError("Please complete all required fields before generating a cover letter.");
+      return;
+    } else if (missing.companyName) {
+      setClError("Please select or enter a Company Name.");
+      return;
+    } else if (missing.roleTitle) {
+      setClError("Please select or enter a Role Title.");
+      return;
+    } else if (missing.tone) {
+      setClError("Please select a Tone.");
+      return;
+    }
+
     setIsGenerating(true);
     setClError(null);
     try {
@@ -444,9 +469,12 @@ const CoverLetterPage = () => {
                         <input
                           type="text"
                           value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value)}
+                          onChange={(e) => {
+                            setCompanyName(e.target.value);
+                            if (e.target.value.trim()) setValidationErrors(prev => ({ ...prev, companyName: false }));
+                          }}
                           placeholder="Enter Company Name"
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrors.companyName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                         />
                         <button
                           type="button"
@@ -465,7 +493,7 @@ const CoverLetterPage = () => {
                         <button
                           type="button"
                           onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between ${validationErrors.companyName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                         >
                           <span className="truncate">{companyName || "Select Company"}</span>
                           <span className="text-gray-400">▼</span>
@@ -502,6 +530,7 @@ const CoverLetterPage = () => {
                                         setCompanyName('');
                                       } else {
                                         setCompanyName(c);
+                                        setValidationErrors(prev => ({ ...prev, companyName: false }));
                                       }
                                       setIsCompanyDropdownOpen(false);
                                     }}
@@ -527,9 +556,12 @@ const CoverLetterPage = () => {
                         <input
                           type="text"
                           value={roleTitle}
-                          onChange={(e) => setRoleTitle(e.target.value)}
+                          onChange={(e) => {
+                            setRoleTitle(e.target.value);
+                            if (e.target.value.trim()) setValidationErrors(prev => ({ ...prev, roleTitle: false }));
+                          }}
                           placeholder="Enter Job Role"
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrors.roleTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                         />
                         <button
                           type="button"
@@ -548,7 +580,7 @@ const CoverLetterPage = () => {
                         <button
                           type="button"
                           onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between ${validationErrors.roleTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                         >
                           <span className="truncate">{roleTitle || "Select Job Role"}</span>
                           <span className="text-gray-400">▼</span>
@@ -585,6 +617,7 @@ const CoverLetterPage = () => {
                                         setRoleTitle('');
                                       } else {
                                         setRoleTitle(r);
+                                        setValidationErrors(prev => ({ ...prev, roleTitle: false }));
                                       }
                                       setIsRoleDropdownOpen(false);
                                     }}
@@ -601,15 +634,19 @@ const CoverLetterPage = () => {
                     )}
                   </div>
 
-                  <div>
+                                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                       Tone Selector
                     </label>
                     <select
                       value={tone}
-                      onChange={(e) => setTone(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                      onChange={(e) => {
+                        setTone(e.target.value);
+                        if (e.target.value.trim()) setValidationErrors(prev => ({ ...prev, tone: false }));
+                      }}
+                      className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrors.tone ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                     >
+                      <option value="">-- Select Tone --</option>
                       <option value="Professional">Professional (Recommended)</option>
                       <option value="Formal">Formal</option>
                       <option value="Friendly">Friendly</option>

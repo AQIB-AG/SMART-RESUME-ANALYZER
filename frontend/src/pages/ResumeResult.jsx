@@ -249,7 +249,8 @@ const ResumeResult = () => {
   const [clCompany, setClCompany] = useState('');
   const [clRole, setClRole] = useState('');
   const [clJobDesc, setClJobDesc] = useState('');
-  const [clTone, setClTone] = useState('Professional');
+  const [clTone, setClTone] = useState('');
+  const [validationErrorsCL, setValidationErrorsCL] = useState({ companyName: false, roleTitle: false, tone: false });
   const [isGeneratingCL, setIsGeneratingCL] = useState(false);
   const [clResult, setClResult] = useState('');
   const [clError, setClError] = useState(null);
@@ -350,6 +351,30 @@ const ResumeResult = () => {
   // Generate Cover Letter Handler
   const handleGenerateCL = async (e) => {
     if (e) e.preventDefault();
+
+    // Validate required fields
+    const missing = {
+      companyName: !clCompany.trim(),
+      roleTitle: !clRole.trim(),
+      tone: !clTone.trim()
+    };
+    setValidationErrorsCL(missing);
+
+    const missingCount = Object.values(missing).filter(Boolean).length;
+    if (missingCount > 1) {
+      setClError("Please complete all required fields before generating a cover letter.");
+      return;
+    } else if (missing.companyName) {
+      setClError("Please select or enter a Company Name.");
+      return;
+    } else if (missing.roleTitle) {
+      setClError("Please select or enter a Role Title.");
+      return;
+    } else if (missing.tone) {
+      setClError("Please select a Tone.");
+      return;
+    }
+
     setIsGeneratingCL(true);
     setClError(null);
     try {
@@ -616,6 +641,85 @@ const ResumeResult = () => {
   const feedback = analysis?.feedback ?? resume?.feedback ?? '';
   const bestFitRole = analysis?.best_fit_role ?? resume?.bestFitRole;
   const jobMatchPercentage = analysis?.job_match_percentage ?? resume?.jobMatchPercentage;
+  const recruiterReview = analysis?.recruiterReview ?? resume?.recruiterReview ?? null;
+
+  const getFallbackRecruiterReview = () => {
+    const score = atsScore || 0;
+    const lowercaseText = (resume?.resumeText || '').toLowerCase();
+    
+    // Dynamic Strengths
+    const strengths = [];
+    if (score >= 75) {
+      strengths.push('Overall profile demonstrates robust readiness for core engineering roles.');
+    }
+    if (matchedSkills.length >= 8) {
+      strengths.push(`Strong technology breadth with solid exposure to ${matchedSkills.slice(0, 4).join(', ')}.`);
+    } else if (matchedSkills.length >= 4) {
+      strengths.push(`Good foundation in key domain tools including ${matchedSkills.slice(0, 3).join(', ')}.`);
+    } else {
+      strengths.push('Possesses fundamental knowledge of industry-standard tools.');
+    }
+    if (lowercaseText.includes('experience') || lowercaseText.includes('employment') || lowercaseText.includes('work history') || lowercaseText.includes('experience:')) {
+      strengths.push('Professional experience section is present and structured with traditional timelines.');
+    }
+    if (lowercaseText.includes('project') || lowercaseText.includes('portfolio') || lowercaseText.includes('github.com')) {
+      strengths.push('Showcases practical application of skills through hands-on project examples.');
+    }
+    if (strengths.length < 2) {
+      strengths.push('Clear contact details and structural sections present.');
+      strengths.push('Basic technical toolkit is present.');
+    }
+
+    // Dynamic Weaknesses
+    const weaknesses = [];
+    if (matchedSkills.length < 6) {
+      weaknesses.push('Limited depth in modern frameworks and core library keywords.');
+    }
+    if (missingSkills.length > 3) {
+      weaknesses.push(`Noticeable skill gaps in key role requirements: ${missingSkills.slice(0, 3).join(', ')}.`);
+    }
+    if (!lowercaseText.includes('certif')) {
+      weaknesses.push('No professional certifications listed to validate domain expertise.');
+    }
+    if (weaknesses.length < 2) {
+      weaknesses.push('Details on soft skills application could be highlighted more explicitly.');
+      weaknesses.push('Project descriptions can emphasize target design and system-level challenges.');
+    }
+
+    // Dynamic Improvements
+    const improvements = [];
+    if (weaknesses.some(w => w.includes('gaps') || w.includes('frameworks'))) {
+      improvements.push(`Study and add fundamental proficiencies in: ${missingSkills.slice(0, 3).join(', ') || 'modern target framework tools'}.`);
+    }
+    if (weaknesses.some(w => w.includes('certifications'))) {
+      improvements.push('Add relevant professional certifications (e.g. AWS Certified Developer, Scrum Master, or equivalent).');
+    }
+    if (improvements.length < 2) {
+      improvements.push('Tailor keywords to match target roles to enhance semantic compatibility.');
+      improvements.push('Use active action verbs (e.g. "Engineered", "Optimized", "Architected") to begin bullet points.');
+    }
+
+    // Round Chances
+    const atsScreening = Math.round(score);
+    const technicalRound = Math.max(30, Math.min(95, Math.round(score * 0.9 + (matchedSkills.length > 5 ? 10 : -10))));
+    const hrRound = Math.max(40, Math.min(95, Math.round(score * 0.85 + 10)));
+    const overall = Math.round((atsScreening + technicalRound + hrRound) / 3);
+
+    return {
+      strengths: strengths.slice(0, 4),
+      weaknesses: weaknesses.slice(0, 4),
+      improvements: improvements.slice(0, 4),
+      chances: {
+        atsScreening,
+        technicalRound,
+        hrRound,
+        overall
+      },
+      method: 'fallback'
+    };
+  };
+
+  const finalReview = recruiterReview || getFallbackRecruiterReview();
 
   const genericRecommendations = [
     'Quantify achievements with specific metrics (e.g., "Increased revenue by 15%").',
@@ -869,6 +973,147 @@ const ResumeResult = () => {
                     </div>
                   </div>
 
+                  {/* AI Recruiter Review Card */}
+                  <div className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 dark:border-charcoal-700/50">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg">
+                          <Sparkles className="w-6 h-6 text-white" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-heading">
+                          🤖 AI Recruiter Review
+                        </h2>
+                      </div>
+                      {finalReview.method === 'ai' && (
+                        <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
+                          AI Generated
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
+                      A comprehensive recruiter-style evaluation detailing candidate strengths, areas of improvement, and expected performance across interview rounds.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-8 mb-4">
+                      {/* Left Column: Strengths, Weaknesses, Improvements */}
+                      <div className="space-y-6">
+                        {/* Strengths */}
+                        <div>
+                          <h3 className="text-base font-semibold text-green-700 dark:text-green-400 mb-2.5 flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5" /> Strengths
+                          </h3>
+                          <ul className="space-y-2">
+                            {finalReview.strengths.map((str, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                                <span className="text-green-500 mt-1">•</span>
+                                <span>{str}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Weaknesses */}
+                        <div>
+                          <h3 className="text-base font-semibold text-amber-700 dark:text-amber-400 mb-2.5 flex items-center gap-2">
+                            <AlertTriangle className="w-5 h-5" /> Areas for Critique
+                          </h3>
+                          <ul className="space-y-2">
+                            {finalReview.weaknesses.map((weak, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                                <span className="text-amber-500 mt-1">•</span>
+                                <span>{weak}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Improvements */}
+                        <div>
+                          <h3 className="text-base font-semibold text-indigo-700 dark:text-indigo-400 mb-2.5 flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5" /> Recommended Improvements
+                          </h3>
+                          <ul className="space-y-2">
+                            {finalReview.improvements.map((imp, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                                <span className="text-indigo-500 mt-1">•</span>
+                                <span>{imp}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Round Chances */}
+                      <div className="space-y-5 bg-gray-50/50 dark:bg-charcoal-700/30 p-6 rounded-2xl border border-gray-100 dark:border-charcoal-600/30 flex flex-col justify-center">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 font-heading">
+                            Estimated Interview Chances
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                            Model predictions based on target role parameters and skill alignments.
+                          </p>
+                        </div>
+                        
+                        {/* ATS Screening */}
+                        <div>
+                          <div className="flex justify-between text-xs font-semibold mb-1">
+                            <span className="text-gray-700 dark:text-gray-300">ATS Screening Match</span>
+                            <span className="text-indigo-600 dark:text-indigo-400">{finalReview.chances.atsScreening}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-2 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-full rounded-full transition-all duration-1000"
+                              style={{ width: `${finalReview.chances.atsScreening}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Technical Round */}
+                        <div>
+                          <div className="flex justify-between text-xs font-semibold mb-1">
+                            <span className="text-gray-700 dark:text-gray-300">Technical Round Readiness</span>
+                            <span className="text-purple-600 dark:text-purple-400">{finalReview.chances.technicalRound}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-2 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-purple-500 to-purple-600 h-full rounded-full transition-all duration-1000"
+                              style={{ width: `${finalReview.chances.technicalRound}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* HR Round */}
+                        <div>
+                          <div className="flex justify-between text-xs font-semibold mb-1">
+                            <span className="text-gray-700 dark:text-gray-300">HR & Behavioral Fit</span>
+                            <span className="text-emerald-600 dark:text-emerald-400">{finalReview.chances.hrRound}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-2 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-full rounded-full transition-all duration-1000"
+                              style={{ width: `${finalReview.chances.hrRound}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Overall Chance */}
+                        <div className="pt-4 border-t border-gray-200 dark:border-charcoal-600">
+                          <div className="flex justify-between text-sm font-bold mb-1.5">
+                            <span className="text-gray-900 dark:text-white">Overall Probability</span>
+                            <span className="text-indigo-600 dark:text-indigo-400">{finalReview.chances.overall}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-charcoal-700 h-3 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 h-full rounded-full transition-all duration-1000"
+                              style={{ width: `${finalReview.chances.overall}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* AI Explanation / Feedback / Actionable Recommendations */}
                   <div className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-lg border border-white/20 dark:border-charcoal-700/50">
                     <div className="flex items-center gap-3 mb-6">
@@ -941,9 +1186,12 @@ const ResumeResult = () => {
                             <input
                               type="text"
                               value={clCompany}
-                              onChange={(e) => setClCompany(e.target.value)}
+                              onChange={(e) => {
+                                setClCompany(e.target.value);
+                                if (e.target.value.trim()) setValidationErrorsCL(prev => ({ ...prev, companyName: false }));
+                              }}
                               placeholder="Enter Company Name"
-                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                              className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrorsCL.companyName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                             />
                             <button
                               type="button"
@@ -962,7 +1210,7 @@ const ResumeResult = () => {
                             <button
                               type="button"
                               onClick={() => setClCompanyDropdownOpen(!clCompanyDropdownOpen)}
-                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                              className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between ${validationErrorsCL.companyName ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                             >
                               <span className="truncate">{clCompany || "Select Company"}</span>
                               <span className="text-gray-400">▼</span>
@@ -976,7 +1224,7 @@ const ResumeResult = () => {
                                   placeholder="Search company..."
                                   className="w-full px-3 py-1.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs"
                                   autoFocus
-                                />
+                                 animate={false}/>
                                 <div className="max-h-48 overflow-y-auto space-y-0.5">
                                   {COMPANIES.filter(c => 
                                     c.toLowerCase().includes(clCompanySearchQuery.toLowerCase())
@@ -997,6 +1245,7 @@ const ResumeResult = () => {
                                             setClCompany('');
                                           } else {
                                             setClCompany(c);
+                                            setValidationErrorsCL(prev => ({ ...prev, companyName: false }));
                                           }
                                           setClCompanyDropdownOpen(false);
                                         }}
@@ -1022,9 +1271,12 @@ const ResumeResult = () => {
                             <input
                               type="text"
                               value={clRole}
-                              onChange={(e) => setClRole(e.target.value)}
+                              onChange={(e) => {
+                                setClRole(e.target.value);
+                                if (e.target.value.trim()) setValidationErrorsCL(prev => ({ ...prev, roleTitle: false }));
+                              }}
                               placeholder="Enter Job Role"
-                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                              className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrorsCL.roleTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                             />
                             <button
                               type="button"
@@ -1043,7 +1295,7 @@ const ResumeResult = () => {
                             <button
                               type="button"
                               onClick={() => setClRoleDropdownOpen(!clRoleDropdownOpen)}
-                              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between"
+                              className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm flex items-center justify-between ${validationErrorsCL.roleTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                             >
                               <span className="truncate">{clRole || "Select Job Role"}</span>
                               <span className="text-gray-400">▼</span>
@@ -1078,6 +1330,7 @@ const ResumeResult = () => {
                                             setClRole('');
                                           } else {
                                             setClRole(r);
+                                            setValidationErrorsCL(prev => ({ ...prev, roleTitle: false }));
                                           }
                                           setClRoleDropdownOpen(false);
                                         }}
@@ -1100,9 +1353,13 @@ const ResumeResult = () => {
                         </label>
                         <select
                           value={clTone}
-                          onChange={(e) => setClTone(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border border-slate-200 dark:border-charcoal-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                          onChange={(e) => {
+                            setClTone(e.target.value);
+                            if (e.target.value.trim()) setValidationErrorsCL(prev => ({ ...prev, tone: false }));
+                          }}
+                          className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-charcoal-900 border text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm ${validationErrorsCL.tone ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-200 dark:border-charcoal-700'}`}
                         >
+                          <option value="">-- Select Tone --</option>
                           <option value="Professional">Professional (Recommended)</option>
                           <option value="Formal">Formal</option>
                           <option value="Friendly">Friendly</option>
