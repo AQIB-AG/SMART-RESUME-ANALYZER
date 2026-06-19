@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { resumeAPI } from '../services/api';
@@ -144,6 +144,8 @@ const CoverLetterPage = () => {
   // Upload states
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [isProcessingResume, setIsProcessingResume] = useState(false);
+  const uploadCounterRef = useRef(0);
 
   // Dropdown states
   const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
@@ -211,10 +213,10 @@ const CoverLetterPage = () => {
   const handleUploadCLResume = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      const allowedTypes = ['.pdf', '.doc', '.docx'];
+      const allowedTypes = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
       const ext = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'));
       if (!allowedTypes.includes(ext)) {
-        alert('Please upload a PDF, DOC, or DOCX file');
+        alert('Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.');
         return;
       }
       if (selectedFile.size > 5 * 1024 * 1024) {
@@ -222,31 +224,58 @@ const CoverLetterPage = () => {
         return;
       }
 
+      // Increment counter to ignore any previous uploads in progress
+      uploadCounterRef.current += 1;
+      const currentUploadId = uploadCounterRef.current;
+
+      setIsProcessingResume(true);
       setIsUploadingFile(true);
-      try {
+
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 5000));
+      const uploadAndGetTextPromise = (async () => {
         const formData = new FormData();
         formData.append('resume', selectedFile);
 
         const uploadRes = await resumeAPI.upload(formData);
         const resData = uploadRes?.data ?? uploadRes;
         
+        let newResumeData = null;
+        let textData = '';
+
         if (resData?.resume) {
           const newResume = resData.resume;
-          setResumes(prev => [newResume, ...prev]);
-          setSelectedResumeId(newResume.id || newResume._id);
-          setUploadedFileName(selectedFile.name);
+          newResumeData = newResume;
           
-          setIsLoadingResumeText(true);
           const detailRes = await resumeAPI.getOne(newResume.id || newResume._id);
           if (detailRes.success && detailRes.data?.resume) {
-            setResumeText(detailRes.data.resume.resumeText || '');
+            textData = detailRes.data.resume.resumeText || '';
           }
+        }
+        return { newResumeData, textData };
+      })();
+
+      try {
+        const [result] = await Promise.all([uploadAndGetTextPromise, delayPromise]);
+
+        if (currentUploadId === uploadCounterRef.current) {
+          if (result.newResumeData) {
+            setResumes(prev => [result.newResumeData, ...prev]);
+            setSelectedResumeId(result.newResumeData.id || result.newResumeData._id);
+            setUploadedFileName(selectedFile.name);
+            setResumeText(result.textData);
+          } else {
+            throw new Error('Failed to parse uploaded resume.');
+          }
+          setIsProcessingResume(false);
+          setIsUploadingFile(false);
         }
       } catch (err) {
         console.error('File upload failed:', err);
-        alert(err?.message || 'Failed to upload resume file.');
-      } finally {
-        setIsUploadingFile(false);
+        if (currentUploadId === uploadCounterRef.current) {
+          alert(err?.message || 'Failed to upload resume file.');
+          setIsProcessingResume(false);
+          setIsUploadingFile(false);
+        }
       }
     }
   };
@@ -255,6 +284,7 @@ const CoverLetterPage = () => {
     setUploadedFileName('');
     setSelectedResumeId('');
     setResumeText('');
+    setIsProcessingResume(false);
   };
 
   const handleGenerateCL = async (e) => {
@@ -305,6 +335,7 @@ const CoverLetterPage = () => {
         setClEditedText(res.coverLetter);
         setIsEditing(false);
         setClMethod(res.method || 'ai');
+        window.dispatchEvent(new CustomEvent('coverLetterComplete'));
       } else {
         setClError(res?.error || 'Failed to generate cover letter');
       }
@@ -384,11 +415,32 @@ const CoverLetterPage = () => {
 
                 <form onSubmit={handleGenerateCL} className="space-y-4">
                   {/* Optional Resume Upload Area */}
-                  <div className="p-4 bg-slate-50/50 dark:bg-charcoal-900/40 rounded-2xl border border-slate-200 dark:border-charcoal-700 shadow-sm mb-4">
+                  <div className={`p-4 bg-slate-50/50 dark:bg-charcoal-900/40 rounded-2xl border border-slate-200 dark:border-charcoal-700 shadow-sm mb-4 transition-all duration-300 ${
+                    isProcessingResume ? 'rotating-neon-border' : ''
+                  }`}>
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
                       Upload Resume
                     </label>
-                    {uploadedFileName ? (
+                    {isProcessingResume ? (
+                      <div>
+                        <input
+                          type="file"
+                          id="cl-resume-upload"
+                          accept=".pdf,.docx,.png,.jpg,.jpeg"
+                          onChange={handleUploadCLResume}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="cl-resume-upload"
+                          className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-xl bg-indigo-50/20 dark:bg-indigo-950/20 cursor-pointer hover:border-indigo-500 transition-all"
+                        >
+                          <RefreshCw className="w-6 h-6 text-indigo-500 animate-spin mb-1" />
+                          <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 animate-pulse">
+                            Analyzing Uploaded Resume...
+                          </span>
+                        </label>
+                      </div>
+                    ) : uploadedFileName ? (
                       <div className="flex items-center justify-between p-2.5 bg-white dark:bg-charcoal-800 rounded-xl border border-slate-200 dark:border-charcoal-700">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="p-1 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
@@ -411,10 +463,9 @@ const CoverLetterPage = () => {
                         <input
                           type="file"
                           id="cl-resume-upload"
-                          accept=".pdf,.doc,.docx"
+                          accept=".pdf,.docx,.png,.jpg,.jpeg"
                           onChange={handleUploadCLResume}
                           className="hidden"
-                          disabled={isUploadingFile}
                         />
                         <label
                           htmlFor="cl-resume-upload"
@@ -422,7 +473,7 @@ const CoverLetterPage = () => {
                         >
                           <Upload className="w-6 h-6 text-indigo-500 mb-1" />
                           <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-                            {isUploadingFile ? 'Uploading...' : 'Choose File'}
+                            Choose File
                           </span>
                         </label>
                       </div>

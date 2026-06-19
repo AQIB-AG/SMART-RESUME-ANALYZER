@@ -15,8 +15,14 @@ const ResumeAnalyzer = () => {
   const navigate = useNavigate();
 
   // Allowed file types
-  const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-  const allowedExtensions = ['.pdf', '.doc', '.docx'];
+  const allowedTypes = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/png',
+    'image/jpeg',
+    'image/jpg'
+  ];
+  const allowedExtensions = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
 
   // Handle drag events
   const handleDragEnter = (e) => {
@@ -46,7 +52,7 @@ const ResumeAnalyzer = () => {
 
     // Check file type
     if (!allowedTypes.includes(file.type) && !allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
-      setError('Only PDF, DOC, and DOCX files are allowed');
+      setError('Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.');
       return false;
     }
 
@@ -184,7 +190,7 @@ const ResumeAnalyzer = () => {
           
           <input
             type="file"
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            accept=".pdf,.docx,.png,.jpg,.jpeg"
             onChange={handleFileSelect}
             className="hidden"
             id="resume-upload"
@@ -306,7 +312,7 @@ const ResumeAnalyzer = () => {
 
         {/* File Type Info */}
         <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          Supported formats: PDF, DOC, DOCX • Max file size: 5MB
+          Supported formats: PDF, DOCX, JPG, JPEG, PNG • Max file size: 5MB
         </div>
       </div>
     </div>

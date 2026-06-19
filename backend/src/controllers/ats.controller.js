@@ -23,15 +23,16 @@ export const analyzeResumeForATS = async (req, res) => {
     const jobDescription = typeof req.body?.jobDescription === 'string' ? req.body.jobDescription.trim() : '';
 
     // Validate file type
+    const allowedExtensions = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
     const fileExtension = path.extname(originalFileName).toLowerCase();
-    if (fileExtension !== '.pdf') {
+    if (!allowedExtensions.includes(fileExtension)) {
       return res.status(400).json({
         success: false,
-        error: 'Only PDF files are allowed for ATS analysis'
+        error: 'Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.'
       });
     }
 
-    // Extract text from PDF
+    // Extract text from file
     let resumeText;
     let extractionMethod = 'unknown';
     let extractionMetadata = null;
@@ -48,7 +49,7 @@ export const analyzeResumeForATS = async (req, res) => {
       ocrUsed = extractionResult.ocrUsed || false;
       processingTime = extractionResult.processingTime || null;
     } catch (error) {
-      console.error('PDF extraction error:', {
+      console.error('File extraction error:', {
         fileName: originalFileName,
         fileSize,
         message: error.message,
@@ -58,7 +59,7 @@ export const analyzeResumeForATS = async (req, res) => {
       const statusCode = typeof error.statusCode === 'number' ? error.statusCode : 500;
       return res.status(statusCode).json({
         success: false,
-        error: error.message || 'Failed to extract text from PDF'
+        error: error.message || 'Failed to extract text from file'
       });
     }
 

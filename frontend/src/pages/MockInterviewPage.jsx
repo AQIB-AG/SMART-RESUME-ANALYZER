@@ -313,6 +313,7 @@ const MockInterviewPage = () => {
       if (res?.success && res?.questions) {
         setQuestions(res.questions);
         setQMethod(res.method || 'ai');
+        window.dispatchEvent(new CustomEvent('mockInterviewComplete'));
       } else {
         setQError(res?.error || 'Failed to generate interview questions');
       }

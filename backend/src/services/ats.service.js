@@ -1,4 +1,62 @@
 import { extractTextFromPdf as extractPdfText } from './pdf.service.js';
+import path from 'path';
+import mammoth from 'mammoth';
+import { runOcrOnImages } from './ocr.service.js';
+
+const extractTextFromDocx = async (file) => {
+  try {
+    let result;
+    if (file.buffer && Buffer.isBuffer(file.buffer)) {
+      result = await mammoth.extractRawText({ buffer: file.buffer });
+    } else if (typeof file.path === 'string') {
+      result = await mammoth.extractRawText({ path: file.path });
+    } else {
+      throw new Error('No file buffer or path provided');
+    }
+    return {
+      success: true,
+      text: String(result.value || '').trim(),
+      method: 'mammoth',
+      pagesProcessed: 1,
+      ocrUsed: false
+    };
+  } catch (error) {
+    return {
+      success: false,
+      text: '',
+      method: 'mammoth',
+      error: `DOCX extraction failed: ${error.message || String(error)}`
+    };
+  }
+};
+
+const extractTextFromImage = async (file) => {
+  try {
+    if (!file.path) {
+      throw new Error('Image file path is missing');
+    }
+    const ocrResult = await runOcrOnImages([file.path]);
+    if (ocrResult.error && !ocrResult.text) {
+      throw new Error(ocrResult.error);
+    }
+    return {
+      success: ocrResult.text.length > 0,
+      text: ocrResult.text,
+      method: 'ocr',
+      pagesProcessed: ocrResult.pagesProcessed || 1,
+      ocrUsed: true,
+      error: ocrResult.error
+    };
+  } catch (error) {
+    return {
+      success: false,
+      text: '',
+      method: 'ocr',
+      ocrUsed: true,
+      error: `Image OCR failed: ${error.message || String(error)}`
+    };
+  }
+};
 
 const TECHNICAL_KEYWORDS = [
   'javascript', 'typescript', 'python', 'java', 'c++', 'c#', 'node.js', 'nodejs',
@@ -28,10 +86,30 @@ const DEGREE_KEYWORDS = [
 ];
 
 export const extractTextFromPdf = async (file) => {
-  const extractionResult = await extractPdfText(file);
+  const fileExtension = path.extname(file.originalname || '').toLowerCase();
+  
+  let extractionResult;
+  if (fileExtension === '.pdf') {
+    extractionResult = await extractPdfText(file);
+  } else if (fileExtension === '.docx') {
+    extractionResult = await extractTextFromDocx(file);
+  } else if (['.png', '.jpg', '.jpeg'].includes(fileExtension)) {
+    extractionResult = await extractTextFromImage(file);
+  } else {
+    extractionResult = {
+      success: false,
+      error: 'Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.'
+    };
+  }
+
+  // If extraction succeeded but returned empty text, treat as failure
+  if (extractionResult.success && (!extractionResult.text || extractionResult.text.trim().length === 0)) {
+    extractionResult.success = false;
+    extractionResult.error = 'Unable to extract text from the uploaded file. Please try another resume.';
+  }
 
   if (!extractionResult.success) {
-    const error = new Error(extractionResult.error || 'Unable to extract text from PDF');
+    const error = new Error(extractionResult.error || 'Unable to extract text from the uploaded file. Please try another resume.');
     error.statusCode = 400;
     throw error;
   }

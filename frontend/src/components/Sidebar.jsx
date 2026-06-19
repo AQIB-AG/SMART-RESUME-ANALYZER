@@ -16,6 +16,13 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  const [isToggleHovered, setIsToggleHovered] = useState(false);
+
+  useEffect(() => {
+    setIsHeaderHovered(false);
+    setIsToggleHovered(false);
+  }, [isCollapsed]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -62,19 +69,93 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
       >
         <div className="flex flex-col h-full">
           {/* Logo / Toggle Header */}
-          <div className={`p-6 border-b border-gray-200 dark:border-charcoal-700 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+          <div 
+            onMouseEnter={() => setIsHeaderHovered(true)}
+            onMouseLeave={() => setIsHeaderHovered(false)}
+            onClick={isCollapsed ? onToggleCollapse : undefined}
+            className={`border-b border-gray-200 dark:border-charcoal-700 flex items-center h-20 transition-all duration-300 relative select-none cursor-pointer ${
+              isCollapsed ? 'p-2 justify-center' : 'p-6 justify-between'
+            }`}
+          >
+            {/* Expanded State Header */}
             {!isCollapsed && (
-              <span className="font-bold text-lg text-gray-900 dark:text-white truncate">
-                Smart Resume Analyzer
-              </span>
+              <div className="flex items-center justify-between w-full transition-all duration-300 ease-in-out">
+                <div className="flex items-center justify-start min-w-0">
+                  <img 
+                    src="/assets/logo.png" 
+                    alt="Logo" 
+                    className="h-[34px] w-auto object-contain flex-shrink-0" 
+                  />
+                </div>
+                <button
+                  onMouseEnter={() => setIsToggleHovered(true)}
+                  onMouseLeave={() => setIsToggleHovered(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleCollapse();
+                  }}
+                  className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center p-1 select-none flex-shrink-0 cursor-pointer"
+                  aria-label="Collapse sidebar"
+                >
+                  <span className="text-2xl font-bold">◧</span>
+                </button>
+
+                {/* Hover State: Close Sidebar Outside Sidebar */}
+                <div 
+                  className={`absolute left-full top-1/2 transform -translate-y-1/2 ml-4 transition-all duration-200 ease-in-out select-none z-50 ${
+                    isToggleHovered 
+                      ? 'opacity-100 scale-100 pointer-events-auto' 
+                      : 'opacity-0 scale-95 pointer-events-none'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleCollapse();
+                  }}
+                >
+                  <div className="bg-gray-900 dark:bg-charcoal-800 text-white dark:text-gray-100 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xl border border-gray-800 dark:border-charcoal-700 whitespace-nowrap flex items-center cursor-pointer">
+                    Close Sidebar
+                  </div>
+                </div>
+              </div>
             )}
-            <button
-              onClick={onToggleCollapse}
-              className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center p-1 select-none"
-              aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              <span className="text-xl font-bold">◧</span>
-            </button>
+
+            {/* Collapsed State Header with Hover to Open */}
+            {isCollapsed && (
+              <div className="relative w-full h-full flex items-center justify-center transition-all duration-300">
+                {/* Default State: Logo Only */}
+                <div className={`transition-all duration-300 ease-in-out flex items-center justify-center ${isHeaderHovered ? 'opacity-0 scale-90 pointer-events-none absolute' : 'opacity-100 scale-100'}`}>
+                  <img 
+                    src="/assets/logo.png" 
+                    alt="Logo" 
+                    className="h-[30px] w-auto object-contain" 
+                  />
+                </div>
+
+                {/* Hover State: ◧ Inside Sidebar */}
+                <div className={`transition-all duration-300 ease-in-out flex items-center justify-center ${isHeaderHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none absolute'}`}>
+                  <span className="text-2xl font-bold text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors select-none">
+                    ◧
+                  </span>
+                </div>
+
+                {/* Hover State: Open Sidebar Outside Sidebar */}
+                <div 
+                  className={`absolute left-full top-1/2 transform -translate-y-1/2 ml-4 transition-all duration-200 ease-in-out select-none z-50 ${
+                    isHeaderHovered 
+                      ? 'opacity-100 scale-100 pointer-events-auto' 
+                      : 'opacity-0 scale-95 pointer-events-none'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleCollapse();
+                  }}
+                >
+                  <div className="bg-gray-900 dark:bg-charcoal-800 text-white dark:text-gray-100 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xl border border-gray-800 dark:border-charcoal-700 whitespace-nowrap flex items-center">
+                    Open Sidebar
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Navigation */}

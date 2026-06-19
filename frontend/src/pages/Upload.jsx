@@ -130,11 +130,11 @@ const Upload = () => {
   };
 
   const handleFile = (selectedFile) => {
-    const allowedTypes = ['.pdf', '.doc', '.docx'];
+    const allowedTypes = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
     const ext = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'));
     setError('');
     if (!allowedTypes.includes(ext)) {
-      setError('Please upload a PDF, DOC, or DOCX file');
+      setError('Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.');
       return;
     }
     if (selectedFile.size > 5 * 1024 * 1024) {
@@ -197,7 +197,9 @@ const Upload = () => {
           });
           localStorage.setItem('hasNewAnalysis', 'true');
           localStorage.setItem('analysisScore', String(atsScore ?? 0));
-          window.dispatchEvent(new CustomEvent('newAnalysisComplete'));
+          window.dispatchEvent(new CustomEvent('newAnalysisComplete', {
+            detail: { score: atsScore ?? 0, fileName: file?.name || '' }
+          }));
           setUploading(false);
           setAnalyzingStep('');
           setIsSubmitting(false);
@@ -326,7 +328,7 @@ const Upload = () => {
                     ref={fileInputRef}
                     type="file"
                     id="file-upload"
-                    accept=".pdf,.doc,.docx"
+                    accept=".pdf,.docx,.png,.jpg,.jpeg"
                     onChange={handleFileChange}
                     className="hidden"
                   />
@@ -338,7 +340,7 @@ const Upload = () => {
                   >
                     Choose File
                   </motion.label>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">Supported formats: PDF, DOC, DOCX</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">Supported formats: PDF, DOCX, JPG, JPEG, PNG</p>
                 </motion.div>
               ) : (
                 <motion.div

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import { Menu, Bell, User as UserIcon, LogOut, X } from 'lucide-react';
+import { Menu, Bell, User as UserIcon, LogOut, X, FileText, Sparkles, Zap, Award } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -12,14 +12,26 @@ const Layout = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(() => 
     typeof window !== 'undefined' && localStorage.getItem('sidebarCollapsed') === 'true'
   );
-  const [hasNewAnalysis, setHasNewAnalysis] = useState(() =>
-    typeof window !== 'undefined' && localStorage.getItem('hasNewAnalysis') === 'true'
-  );
+  
+  // Notification states
+  const [notifications, setNotifications] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('notifications_list');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+  const [isRinging, setIsRinging] = useState(false);
+  const [timeTick, setTimeTick] = useState(0);
+
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  
   const userMenuRef = useRef(null);
   const notificationsRef = useRef(null);
+  const ringTimeoutRef = useRef(null);
+  const readTimeoutRef = useRef(null);
 
   const toggleSidebarCollapse = () => {
     setIsCollapsed((prev) => {
@@ -29,26 +41,158 @@ const Layout = ({ children }) => {
     });
   };
 
+  // Helper: Format relative timestamp
+  const formatRelativeTime = (timestamp) => {
+    const diff = Date.now() - new Date(timestamp).getTime();
+    const seconds = Math.floor(diff / 1000);
+    if (seconds < 0) return 'Just now'; // handle slight time sync differences
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  };
+
+  // Helper: Add a notification — every event is stored independently (no type dedup)
+  const addNotification = (newNotificationData) => {
+    setNotifications((prev) => {
+      const newNotification = {
+        id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        type: newNotificationData.type,
+        title: newNotificationData.title,
+        detail: newNotificationData.detail || null,
+        fileName: newNotificationData.fileName || null,
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+
+      // Prepend new event and keep the latest 10 only
+      const updated = [newNotification, ...prev].slice(0, 10);
+      localStorage.setItem('notifications_list', JSON.stringify(updated));
+      return updated;
+    });
+
+    // Start bell ringing
+    setIsRinging(true);
+    
+    // Clear and reset the 5 seconds auto-stop timer
+    if (ringTimeoutRef.current) {
+      clearTimeout(ringTimeoutRef.current);
+    }
+    ringTimeoutRef.current = setTimeout(() => {
+      setIsRinging(false);
+      ringTimeoutRef.current = null;
+    }, 5000);
+  };
+
+  // Helper: Mark all notifications as read
+  const markAllAsRead = () => {
+    setNotifications((prev) => {
+      const hasUnreadItems = prev.some((n) => !n.read);
+      if (!hasUnreadItems) return prev;
+      const updated = prev.map((n) => ({ ...n, read: true }));
+      localStorage.setItem('notifications_list', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const handleBellClick = () => {
-    // Reset new analysis flag (this allows new analyses to trigger notifications again)
-    if (hasNewAnalysis) {
-      setHasNewAnalysis(false);
-      localStorage.setItem('hasNewAnalysis', 'false');
+    // Stop ringing immediately if user clicks
+    if (isRinging) {
+      setIsRinging(false);
+      if (ringTimeoutRef.current) {
+        clearTimeout(ringTimeoutRef.current);
+        ringTimeoutRef.current = null;
+      }
     }
     
     // Toggle notifications dropdown
     setNotificationsOpen((prev) => !prev);
   };
 
-  const analysisScore = typeof window !== 'undefined' ? localStorage.getItem('analysisScore') : null;
-
-  // Sync with localStorage when a new analysis completes (e.g. from Upload page)
+  // Listen to custom notification events
   useEffect(() => {
-    const handleNewAnalysis = () => {
-      setHasNewAnalysis(true);
+    const handleNewAnalysis = (e) => {
+      const score = e?.detail?.score ?? localStorage.getItem('analysisScore') ?? '0';
+      const fileName = e?.detail?.fileName || '';
+      addNotification({
+        type: 'ATS_ANALYSIS',
+        title: 'Resume Analysis Completed',
+        detail: `ATS Score: ${score}%`,
+        fileName,
+      });
     };
+
+    const handleCoverLetter = () => {
+      addNotification({
+        type: 'COVER_LETTER',
+        title: 'Cover Letter Generated Successfully',
+      });
+    };
+
+    const handleMockInterview = () => {
+      addNotification({
+        type: 'MOCK_INTERVIEW',
+        title: 'Mock Interview Generated Successfully',
+      });
+    };
+
     window.addEventListener('newAnalysisComplete', handleNewAnalysis);
-    return () => window.removeEventListener('newAnalysisComplete', handleNewAnalysis);
+    window.addEventListener('coverLetterComplete', handleCoverLetter);
+    window.addEventListener('mockInterviewComplete', handleMockInterview);
+
+    return () => {
+      window.removeEventListener('newAnalysisComplete', handleNewAnalysis);
+      window.removeEventListener('coverLetterComplete', handleCoverLetter);
+      window.removeEventListener('mockInterviewComplete', handleMockInterview);
+    };
+  }, []);
+
+  // Handle auto marking notifications as read when panel is opened/closed
+  useEffect(() => {
+    if (notificationsOpen) {
+      const hasUnreadItems = notifications.some((n) => !n.read);
+      if (hasUnreadItems) {
+        readTimeoutRef.current = setTimeout(() => {
+          markAllAsRead();
+          readTimeoutRef.current = null;
+        }, 1500);
+      }
+    } else {
+      if (readTimeoutRef.current) {
+        clearTimeout(readTimeoutRef.current);
+        readTimeoutRef.current = null;
+      }
+      markAllAsRead();
+    }
+    return () => {
+      if (readTimeoutRef.current) {
+        clearTimeout(readTimeoutRef.current);
+      }
+    };
+  }, [notificationsOpen]);
+
+  // Periodic ticking to update relative timestamps while dropdown is open
+  useEffect(() => {
+    let interval;
+    if (notificationsOpen) {
+      interval = setInterval(() => {
+        setTimeTick((t) => t + 1);
+      }, 15000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [notificationsOpen]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+      if (readTimeoutRef.current) clearTimeout(readTimeoutRef.current);
+    };
   }, []);
 
   // Close dropdowns when clicking outside
@@ -109,12 +253,12 @@ const Layout = ({ children }) => {
               <button
                 onClick={handleBellClick}
                 className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-charcoal-700 text-gray-600 dark:text-gray-300 relative transition-colors ${
-                  hasNewAnalysis ? 'animate-shake' : ''
+                  isRinging ? 'animate-shake' : ''
                 }`}
                 aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
-                {hasNewAnalysis && (
+                {notifications.some(n => !n.read) && (
                   <span
                     className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white dark:border-charcoal-800 animate-pulse"
                     aria-hidden="true"
@@ -123,24 +267,70 @@ const Layout = ({ children }) => {
               </button>
               
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-charcoal-800 rounded-lg shadow-xl border border-gray-200 dark:border-charcoal-700 z-50">
-                  <div className="p-4 border-b border-gray-200 dark:border-charcoal-700">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-charcoal-800 rounded-lg shadow-xl border border-gray-200 dark:border-charcoal-700 z-50 overflow-hidden">
+                  <div className="p-4 border-b border-gray-200 dark:border-charcoal-700 flex justify-between items-center bg-gray-50/50 dark:bg-charcoal-800/50">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Notifications</h3>
+                    {notifications.length > 0 && (
+                      <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-bold">
+                        {notifications.filter(n => !n.read).length} new
+                      </span>
+                    )}
                   </div>
-                  <div className="p-4">
-                    {analysisScore !== null && analysisScore !== '' ? (
-                      <div className="rounded-lg border border-gray-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 p-4 shadow-sm">
-                        <p className="text-indigo-500 font-medium mb-1">Resume analysis complete</p>
-                        <p className="text-gray-800 dark:text-gray-200 text-sm mb-2">
-                          Your resume has been analyzed successfully.
-                        </p>
-                        <p className="text-cyan-500 font-semibold">Your score: {analysisScore}%</p>
+                  <div>
+                    {notifications.length > 0 ? (
+                      <div className="divide-y divide-gray-100 dark:divide-charcoal-700/50 max-h-96 overflow-y-auto">
+                        {notifications.map((n) => {
+                          const Icon = n.type === 'ATS_ANALYSIS' ? Award : n.type === 'COVER_LETTER' ? FileText : Zap;
+                          const iconColorClass = n.type === 'ATS_ANALYSIS'
+                            ? 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950/40'
+                            : n.type === 'COVER_LETTER'
+                            ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40'
+                            : 'text-amber-500 bg-amber-50 dark:bg-amber-950/40';
+
+                          return (
+                            <div
+                              key={n.id}
+                              className={`p-4 flex gap-3 transition-colors duration-300 relative ${
+                                !n.read
+                                  ? 'bg-indigo-50/40 dark:bg-indigo-950/20'
+                                  : 'bg-white hover:bg-slate-50/50 dark:bg-charcoal-800 dark:hover:bg-charcoal-700/30'
+                              }`}
+                            >
+                              <div className={`p-2 rounded-xl ${iconColorClass} self-start flex-shrink-0`}>
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-xs font-semibold text-gray-900 dark:text-white leading-tight">
+                                    {n.title}
+                                  </p>
+                                  {!n.read && (
+                                    <span className="h-2 w-2 bg-red-500 rounded-full flex-shrink-0 animate-pulse mt-1" />
+                                  )}
+                                </div>
+                                {n.fileName && (
+                                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 font-medium truncate">
+                                    📄 {n.fileName}
+                                  </p>
+                                )}
+                                {n.detail && (
+                                  <p className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 mt-1">
+                                    {n.detail}
+                                  </p>
+                                )}
+                                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 flex items-center gap-1 font-medium">
+                                  ⏱ {formatRelativeTime(n.timestamp)}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : (
-                      <div className="p-8 text-center">
+                      <div className="p-8 text-center bg-white dark:bg-charcoal-800">
                         <Bell className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
-                        <p className="text-gray-600 dark:text-gray-400">No notifications yet</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">You'll see updates here when they arrive</p>
+                        <p className="text-gray-600 dark:text-gray-400 font-semibold text-sm">No notifications yet</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 font-medium">You'll see updates here when they arrive</p>
                       </div>
                     )}
                   </div>

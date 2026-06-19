@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import Resume from '../models/Resume.model.js';
+import { extractTextFromPdf } from '../services/ats.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,12 +25,15 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = ['.pdf', '.doc', '.docx'];
+  const allowedExtensions = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
   const ext = path.extname(file.originalname).toLowerCase();
   if (allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.'), false);
+    const error = new Error('Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.');
+    error.status = 400;
+    error.statusCode = 400;
+    cb(error, false);
   }
 };
 
@@ -53,6 +57,20 @@ export const uploadResume = async (req, res) => {
       });
     }
 
+    let resumeText = '';
+    let skills = [];
+    try {
+      const extractionResult = await extractTextFromPdf(req.file);
+      resumeText = extractionResult.text;
+      skills = extractionResult.skills || [];
+    } catch (error) {
+      console.error('Failed to extract text from resume:', error);
+      return res.status(error.statusCode || 400).json({
+        success: false,
+        error: error.message || 'Unable to extract text from the uploaded file. Please try another resume.'
+      });
+    }
+
     const resume = new Resume({
       name: req.user.first_name + ' ' + req.user.last_name,
       email: req.user.email,
@@ -61,6 +79,8 @@ export const uploadResume = async (req, res) => {
       originalFileName: req.file.originalname,
       fileSize: req.file.size,
       userId: req.user.id,
+      resumeText,
+      skills,
       status: 'uploaded'
     });
 
@@ -69,10 +89,26 @@ export const uploadResume = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Resume uploaded successfully',
+      resume: {
+        id: savedResume._id,
+        _id: savedResume._id,
+        fileName: savedResume.fileName,
+        originalFileName: savedResume.originalFileName,
+        resumeText: savedResume.resumeText,
+        skills: savedResume.skills
+      },
       data: {
         resume_id: savedResume._id,
         filename: savedResume.fileName,
-        status: savedResume.status
+        status: savedResume.status,
+        resume: {
+          id: savedResume._id,
+          _id: savedResume._id,
+          fileName: savedResume.fileName,
+          originalFileName: savedResume.originalFileName,
+          resumeText: savedResume.resumeText,
+          skills: savedResume.skills
+        }
       }
     });
   } catch (error) {
