@@ -13,6 +13,7 @@ const Upload = () => {
   const [uploading, setUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [validationError, setValidationError] = useState(null);
   const [result, setResult] = useState(null);
   const [analyzingStep, setAnalyzingStep] = useState('');
   const [dragActive, setDragActive] = useState(false);
@@ -133,6 +134,7 @@ const Upload = () => {
     const allowedTypes = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
     const ext = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'));
     setError('');
+    setValidationError(null);
     if (!allowedTypes.includes(ext)) {
       setError('Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.');
       return;
@@ -162,6 +164,7 @@ const Upload = () => {
     setIsSubmitting(true);
     setUploading(true);
     setError('');
+    setValidationError(null);
     setResult(null);
     setAnalyzingStep(analyzingSteps[0]);
     const startTime = Date.now();
@@ -212,6 +215,20 @@ const Upload = () => {
       clearInterval(stepInterval);
       console.error('Upload error details:', err);
       let errorMessage = 'Analysis failed. Please try again.';
+      
+      const errorObj = err?.response?.data || err;
+      if (errorObj && errorObj.isResume === false) {
+        setValidationError({
+          isResume: false,
+          confidence: errorObj.confidence,
+          reason: errorObj.reason
+        });
+        setUploading(false);
+        setAnalyzingStep('');
+        setIsSubmitting(false);
+        return;
+      }
+
       if (err?.response?.data) {
         const errorData = err.response.data;
         errorMessage = errorData?.error || errorData?.message || errorMessage;
@@ -230,6 +247,7 @@ const Upload = () => {
   const removeFile = () => {
     setFile(null);
     setError('');
+    setValidationError(null);
     setResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -376,6 +394,53 @@ const Upload = () => {
                 className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-xl text-red-600 dark:text-red-300 text-sm"
               >
                 {error}
+              </motion.div>
+            )}
+
+            {validationError && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-6 p-8 bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 border border-red-200 dark:border-red-800/40 rounded-2xl shadow-md text-left"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/40 rounded-xl text-red-600 dark:text-red-400">
+                    <AlertTriangle className="w-8 h-8" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-red-850 dark:text-red-300 mb-2 font-heading">
+                      Document Validation Failed
+                    </h3>
+                    <p className="text-red-750 dark:text-red-400 font-medium mb-4">
+                      This uploaded file doesn't appear to be a professional resume.
+                    </p>
+                    <div className="bg-white/60 dark:bg-charcoal-800/60 rounded-xl p-4 border border-red-100 dark:border-red-900/30 mb-4">
+                      <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Please upload one of the following:
+                      </p>
+                      <ul className="space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+                        <li className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          PDF Resume
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          DOCX Resume
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          Resume Image (JPG/PNG)
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs text-red-500 dark:text-red-400 font-medium">
+                      <span>Supported resume formats only.</span>
+                      {validationError.reason && (
+                        <span className="italic opacity-80">Reason: {validationError.reason} (Confidence: {validationError.confidence}%)</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             )}
 

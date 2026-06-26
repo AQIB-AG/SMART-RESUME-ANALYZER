@@ -14,13 +14,14 @@ import {
   handleGenerateInterviewQuestionsStandalone
 } from '../controllers/ai-generator.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
+import { validateFileSignature } from '../middleware/file-validation.middleware.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticate);
 
-router.post('/', upload.single('resume'), uploadResume);
+router.post('/', upload.single('resume'), validateFileSignature, uploadResume);
 router.get('/', getResumes);
 
 // Standalone AI Generator Routes (registered before /:id wildcard)

@@ -1,6 +1,6 @@
 import Resume from '../models/Resume.model.js';
 import { extractTextFromPdf, performAtsAnalysis, getSkillSuggestions } from '../services/ats.service.js';
-import { analyzeResumeWithAI, generateRecruiterReview, generateFallbackRecruiterReview } from '../ai/ai.service.js';
+import { analyzeResumeWithAI, generateRecruiterReview, generateFallbackRecruiterReview, validateResumeWithAI } from '../ai/ai.service.js';
 import path from 'path';
 
 /**
@@ -41,7 +41,8 @@ export const analyzeResumeForATS = async (req, res) => {
     let processingTime = null;
 
     try {
-      const extractionResult = await extractTextFromPdf(req.file);
+      const extractFn = global.mockExtractTextFromPdf || extractTextFromPdf;
+      const extractionResult = await extractFn(req.file);
       resumeText = extractionResult.text;
       extractionMethod = extractionResult.method || 'unknown';
       extractionMetadata = extractionResult.metadata || null;
@@ -60,6 +61,32 @@ export const analyzeResumeForATS = async (req, res) => {
       return res.status(statusCode).json({
         success: false,
         error: error.message || 'Failed to extract text from file'
+      });
+    }
+
+    // Validate that the document is a professional resume
+    const userName = req.user ? `${req.user.first_name} ${req.user.last_name}` : '';
+    const validationResult = await validateResumeWithAI(resumeText, userName);
+
+    if (!validationResult.isResume || validationResult.confidence < 80) {
+      console.log('❌ RESUME VALIDATION FAILED:', validationResult);
+      
+      // Delete the file from the filesystem to avoid clutter
+      if (filePath) {
+        try {
+          const fs = await import('fs');
+          await fs.promises.unlink(filePath).catch(console.error);
+        } catch (unlinkError) {
+          console.error('Failed to delete invalid upload:', unlinkError);
+        }
+      }
+
+      return res.status(400).json({
+        success: false,
+        isResume: false,
+        confidence: validationResult.confidence,
+        reason: validationResult.reason,
+        error: "This uploaded file doesn't appear to be a professional resume."
       });
     }
 

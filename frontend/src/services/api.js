@@ -57,7 +57,7 @@ export const resumeAPI = {
       },
     });
   },
-  getAll: () => api.get('/resumes'),
+  getAll: () => api.get('/resumes', { params: { _t: Date.now() } }),
   getOne: (id) => api.get(`/resumes/${id}`),
   update: (id, data) => api.put(`/resumes/${id}`, data),
   delete: (id) => api.delete(`/resumes/${id}`),

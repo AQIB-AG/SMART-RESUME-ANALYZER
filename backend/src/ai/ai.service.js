@@ -583,4 +583,228 @@ function extractJson(text) {
   }
 }
 
+/**
+ * Perform point-based heuristic validation for resume criteria
+ * @param {string} resumeText
+ * @param {string} userName
+ * @returns {object} { isResume, confidence, reason, method }
+ */
+export function runHeuristicValidation(resumeText, userName = '') {
+  const lowerText = String(resumeText || '').toLowerCase();
+  let score = 0;
+  const breakdown = {};
+
+  // 1. Email check (+10)
+  const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/;
+  const hasEmail = emailPattern.test(resumeText);
+  if (hasEmail) {
+    score += 10;
+    breakdown.email = 10;
+  } else {
+    breakdown.email = 0;
+  }
+
+  // 2. Phone check (+10)
+  const phonePattern = /(?:\+?\d{1,3}[\s-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/;
+  const hasPhone = phonePattern.test(resumeText);
+  if (hasPhone) {
+    score += 10;
+    breakdown.phone = 10;
+  } else {
+    breakdown.phone = 0;
+  }
+
+  // 3. Name check (+10)
+  let hasName = false;
+  if (userName) {
+    const nameParts = userName.toLowerCase().split(/\s+/).filter(p => p.length > 2);
+    if (nameParts.length > 0 && nameParts.every(part => lowerText.includes(part))) {
+      hasName = true;
+    }
+  }
+  if (!hasName) {
+    const firstLines = String(resumeText || '').split('\n').map(l => l.trim()).filter(l => l.length > 0).slice(0, 5);
+    for (const line of firstLines) {
+      if (/^[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){1,2}$/.test(line)) {
+        hasName = true;
+        break;
+      }
+    }
+  }
+  if (hasName) {
+    score += 10;
+    breakdown.name = 10;
+  } else {
+    breakdown.name = 0;
+  }
+
+  // 4. Skills check (+20)
+  const hasSkillsSection = /(skills|technical skills|core competencies|expertise|technologies)/i.test(lowerText);
+  const commonSkills = ['javascript', 'python', 'react', 'node', 'sql', 'html', 'css', 'java', 'c++', 'aws', 'docker', 'git'];
+  const matchedSkillsCount = commonSkills.filter(s => lowerText.includes(s)).length;
+  const hasSkills = hasSkillsSection || (matchedSkillsCount >= 3);
+  if (hasSkills) {
+    score += 20;
+    breakdown.skills = 20;
+  } else {
+    breakdown.skills = 0;
+  }
+
+  // 5. Education check (+20)
+  const hasEducation = /(education|academic|university|college|b\.tech|b\.com|mca|diploma|bachelor|master|phd)/i.test(lowerText);
+  if (hasEducation) {
+    score += 20;
+    breakdown.education = 20;
+  } else {
+    breakdown.education = 0;
+  }
+
+  // 6. Experience check (+20)
+  const hasExperience = /(experience|employment|work history|professional history|internship|responsibilities|software engineer|developer)/i.test(lowerText);
+  if (hasExperience) {
+    score += 20;
+    breakdown.experience = 20;
+  } else {
+    breakdown.experience = 0;
+  }
+
+  // 7. Projects check (+20)
+  const hasProjects = /(projects|project experience|portfolio|github\.com)/i.test(lowerText);
+  if (hasProjects) {
+    score += 20;
+    breakdown.projects = 20;
+  } else {
+    breakdown.projects = 0;
+  }
+
+  const passed = score >= 60;
+  
+  let confidence = 0;
+  if (passed) {
+    confidence = Math.round(80 + ((score - 60) / 50) * 20);
+  } else {
+    confidence = Math.round(80 + ((60 - score) / 60) * 20);
+  }
+
+  const reason = passed 
+    ? `Document passed heuristic checks with a score of ${score}/110.` 
+    : `Document failed heuristic checks with a score of ${score}/110 (needed at least 60).`;
+
+  console.log('🤖 HEURISTIC VALIDATOR:', { score, passed, confidence, reason, breakdown });
+
+  return {
+    isResume: passed,
+    confidence,
+    reason,
+    method: 'heuristic'
+  };
+}
+
+/**
+ * Validate if text content is a resume using LLM with heuristic fallback
+ * @param {string} resumeText
+ * @param {string} userName
+ * @returns {Promise<object>} { isResume, confidence, reason, method }
+ */
+export async function validateResumeWithAI(resumeText, userName = '') {
+  const token = process.env.HF_TOKEN || process.env.HF_API_KEY;
+  if (!token) {
+    console.warn('AI: HF_TOKEN not set, performing heuristic validation fallback');
+    return runHeuristicValidation(resumeText, userName);
+  }
+
+  const prompt = `You are an AI assistant that determines if a given document is a professional resume (also known as a CV).
+Analyze the following document text and determine if it is genuinely a professional resume.
+
+A professional resume must represent a person's professional profile, history, education, skills, or projects.
+It should NOT be a:
+- Question paper or assignment
+- Lecture notes or study guide
+- Research paper, article, or book chapter
+- Bank statement, bill, invoice, or receipt
+- Medical report
+- Legal document
+- Random text or placeholder document
+
+Look for presence of contact info (name, email, phone, linkedin, github), education (e.g. B.Tech, B.Com, MCA, university, college), skills (e.g. Java, Python, React, SQL), work experience, projects, or certifications.
+
+Document Text (first 4000 characters):
+"${resumeText.substring(0, 4000)}"
+
+Output only a valid JSON object. DO NOT output any markdown tags (like \`\`\`json) or conversational text. Return only the JSON object.
+JSON format must be EXACTLY:
+{
+  "isResume": true or false,
+  "confidence": <integer percentage between 0 and 100>,
+  "reason": "<brief justification sentence>"
+}
+`;
+
+  const models = [
+    'Qwen/Qwen2.5-72B-Instruct',
+    'mistralai/Mistral-7B-Instruct-v0.3',
+    'meta-llama/Llama-3-8B-Instruct'
+  ];
+
+  for (const model of models) {
+    const url = `https://api-inference.huggingface.co/models/${model}`;
+    console.log(`🤖 AI VALIDATOR: Trying model ${model}...`);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          inputs: prompt,
+          parameters: {
+            max_new_tokens: 200,
+            temperature: 0.1,
+            return_full_text: false
+          },
+          options: {
+            use_cache: false,
+            wait_for_model: true
+          }
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+
+      if (!res.ok) {
+        console.warn(`🤖 AI VALIDATOR: Model ${model} failed with status ${res.status}`);
+        continue;
+      }
+
+      const data = await res.json();
+      let text = '';
+      if (Array.isArray(data) && data[0]?.generated_text) {
+        text = data[0].generated_text;
+      } else if (data && typeof data === 'object' && data.generated_text) {
+        text = data.generated_text;
+      } else if (data && typeof data === 'string') {
+        text = data;
+      }
+
+      if (text) {
+        const parsed = extractJson(text);
+        if (parsed && typeof parsed.isResume === 'boolean' && typeof parsed.confidence === 'number' && parsed.reason) {
+          console.log(`🤖 AI VALIDATOR: Success using model ${model}`, parsed);
+          return {
+            isResume: parsed.isResume,
+            confidence: parsed.confidence,
+            reason: parsed.reason,
+            method: 'ai'
+          };
+        }
+      }
+    } catch (err) {
+      console.warn(`🤖 AI VALIDATOR: Exception on model ${model}:`, err.message);
+    }
+  }
+
+  console.warn('🤖 AI VALIDATOR: AI validation failed or timed out. Falling back to heuristic rules.');
+  return runHeuristicValidation(resumeText, userName);
+}
+
 export { ROLE_TEMPLATES };

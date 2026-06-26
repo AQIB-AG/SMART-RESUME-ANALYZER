@@ -19,18 +19,29 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}_${file.originalname}`;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const uniqueName = `${uuidv4()}${ext}`;
     cb(null, uniqueName);
   }
 });
 
 const fileFilter = (req, file, cb) => {
   const allowedExtensions = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
+  const allowedMimes = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/png',
+    'image/jpeg',
+    'image/pjpeg'
+  ];
+  
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowedExtensions.includes(ext)) {
+  const mime = file.mimetype;
+  
+  if (allowedExtensions.includes(ext) && allowedMimes.includes(mime)) {
     cb(null, true);
   } else {
-    const error = new Error('Unsupported file format. Please upload PDF, DOCX, JPG, JPEG, or PNG.');
+    const error = new Error('Unsupported file format or MIME type. Please upload PDF, DOCX, JPG, JPEG, or PNG.');
     error.status = 400;
     error.statusCode = 400;
     cb(error, false);
@@ -138,7 +149,9 @@ export const getResumes = async (req, res) => {
       }
     }
 
-    const resumes = await Resume.find(query).populate('userId', 'email first_name last_name');
+    const resumes = await Resume.find(query)
+      .sort({ createdAt: -1 })
+      .populate('userId', 'email first_name last_name');
 
     const resumeList = resumes.map(resume => ({
       id: resume._id,
@@ -154,7 +167,9 @@ export const getResumes = async (req, res) => {
       ai_explanation: resume.aiExplanation,
       best_fit_role: resume.bestFitRole,
       job_match_percentage: resume.jobMatchPercentage,
-      user_id: resume.userId._id
+      skills: resume.skills || [],
+      skillGaps: resume.skillGaps || [],
+      user_id: resume.userId ? (resume.userId._id || resume.userId) : null
     }));
 
     res.json({

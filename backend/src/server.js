@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
 
 // Import database connection
 import connectDB from './config/database.js';
@@ -29,6 +32,89 @@ const HOST = process.env.HOST || '0.0.0.0';
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
   .split(',')
   .map((origin) => origin.trim());
+
+// Apply Helmet for security headers (ensuring CORP is cross-origin so frontend can load resources)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Apply express-mongo-sanitize to prevent NoSQL injection
+app.use(mongoSanitize());
+
+// Rate Limiters
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again after 15 minutes'
+  }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many authentication attempts, please try again after 15 minutes'
+  }
+});
+
+const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many resume uploads from this IP, please try again after 15 minutes'
+  }
+});
+
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many AI generation requests, please try again after 15 minutes'
+  }
+});
+
+// Apply global limiter to all API routes
+app.use('/api', globalLimiter);
+
+// Apply auth limiter to login and register
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
+// Specific rate limiters for uploads and AI endpoints
+app.use('/api/ats/analyzeResume', uploadLimiter);
+app.use('/api/analyzeResume', uploadLimiter);
+app.use('/api/resumes', (req, res, next) => {
+  if (req.method === 'POST') {
+    if (req.path.includes('cover-letter') || req.path.includes('interview-questions')) {
+      return aiLimiter(req, res, next);
+    }
+    if (req.path === '/' || req.path === '') {
+      return uploadLimiter(req, res, next);
+    }
+  }
+  next();
+});
+
+// Disable caching globally for API endpoints to prevent stale data
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 // Middleware
 app.use(cors({

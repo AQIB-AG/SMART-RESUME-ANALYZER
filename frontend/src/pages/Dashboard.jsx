@@ -56,7 +56,8 @@ const Dashboard = () => {
   const generateChartData = () => {
     if (resumes.length === 0) return [];
     
-    const data = resumes.slice(0, 5).map((resume, index) => ({
+    // Slice latest 5 and reverse to show them in chronological order (left to right)
+    const data = resumes.slice(0, 5).reverse().map((resume, index) => ({
       name: resume.original_filename || resume.originalFileName || `Resume ${index + 1}`,
       score: resume.ats_score ?? resume.atsScore ?? 0,
       date: new Date(resume.upload_date ?? resume.createdAt).toLocaleDateString()
@@ -70,14 +71,42 @@ const Dashboard = () => {
   const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'];
 
   const getSkillGapData = () => {
-    // Simulate skill gap data for demo purposes
-    return [
-      { name: 'React', value: 85 },
-      { name: 'Node.js', value: 70 },
-      { name: 'Python', value: 65 },
-      { name: 'SQL', value: 60 },
-      { name: 'AWS', value: 55 },
-    ];
+    if (resumes.length === 0) return [];
+    
+    const latestResume = resumes[0];
+    const detected = latestResume.skills || [];
+    const missing = latestResume.skillGaps || latestResume.skill_gaps || [];
+    
+    if (detected.length === 0 && missing.length === 0) {
+      return [];
+    }
+    
+    // Limit to top 5 matched and top 5 missing skills for clean visualization
+    const limitDetected = detected.slice(0, 5);
+    const limitMissing = missing.slice(0, 5);
+    
+    const totalItems = limitDetected.length + limitMissing.length;
+    const proportion = parseFloat((100 / totalItems).toFixed(2));
+    
+    const data = [];
+    
+    limitDetected.forEach(skill => {
+      data.push({
+        name: `${skill} (Have)`,
+        value: proportion,
+        status: 'have'
+      });
+    });
+    
+    limitMissing.forEach(skill => {
+      data.push({
+        name: `${skill} (Gap)`,
+        value: proportion,
+        status: 'gap'
+      });
+    });
+    
+    return data;
   };
 
   if (loading) {
@@ -299,33 +328,43 @@ const Dashboard = () => {
           >
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 font-heading">Skill Gap Analysis</h2>
             <div className="h-80 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={getSkillGapData()}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {getSkillGapData().map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
-                      borderRadius: '8px',
-                      backdropFilter: 'blur(10px)'
-                    }} 
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {getSkillGapData().length === 0 ? (
+                <div className="text-center text-gray-500 dark:text-gray-400">
+                  <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm">No skills details found in the latest resume.</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={getSkillGapData()}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {getSkillGapData().map((entry, index) => {
+                        const color = entry.status === 'have'
+                          ? ['#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6'][index % 5]
+                          : ['#ef4444', '#f97316', '#f59e0b', '#fbbf24', '#fcd34d'][index % 5];
+                        return <Cell key={`cell-${index}`} fill={color} />;
+                      })}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        borderRadius: '8px',
+                        backdropFilter: 'blur(10px)'
+                      }} 
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </motion.div>
         </div>

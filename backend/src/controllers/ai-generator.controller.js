@@ -4,6 +4,22 @@ import * as aiGeneratorService from '../services/ai-generator.service.js';
 import { parseResumeText } from '../utils/resume-parser.js';
 
 /**
+ * Defensive input sanitization to filter out potential prompt injection keywords
+ * and clean user strings before passing them to the AI prompt builder.
+ */
+const sanitizePromptInput = (input) => {
+  if (typeof input !== 'string') return '';
+  return input
+    .replace(/ignore\s+all\s+previous\s+instructions/gi, '')
+    .replace(/ignore\s+previous\s+instructions/gi, '')
+    .replace(/system\s+prompt/gi, '')
+    .replace(/you\s+must\s+now/gi, '')
+    .replace(/new\s+instructions/gi, '')
+    .replace(/<\/?[^>]+(>|$)/g, '') // Strip HTML tags
+    .trim();
+};
+
+/**
  * Handle POST /api/resumes/:id/cover-letter
  */
 export const handleGenerateCoverLetter = async (req, res) => {
@@ -30,10 +46,10 @@ export const handleGenerateCoverLetter = async (req, res) => {
     const { companyName, roleTitle, jobDescription, tone } = req.body;
 
     const result = await aiGeneratorService.generateCoverLetter(resume, {
-      companyName: typeof companyName === 'string' ? companyName.trim() : '',
-      roleTitle: typeof roleTitle === 'string' ? roleTitle.trim() : '',
-      jobDescription: typeof jobDescription === 'string' ? jobDescription.trim() : '',
-      tone: typeof tone === 'string' ? tone.trim() : 'Professional'
+      companyName: sanitizePromptInput(companyName),
+      roleTitle: sanitizePromptInput(roleTitle),
+      jobDescription: sanitizePromptInput(jobDescription),
+      tone: sanitizePromptInput(tone) || 'Professional'
     });
 
     return res.status(200).json(result);
@@ -82,7 +98,7 @@ export const handleGenerateInterviewQuestions = async (req, res) => {
     const targetType = ['Technical', 'HR', 'Mixed'].includes(interviewType) ? interviewType : 'Technical';
     const targetDifficulty = ['Easy', 'Medium', 'Hard'].includes(difficulty) ? difficulty : 'Medium';
     const targetNumber = [5, 10, 15].includes(Number(questionCount)) ? Number(questionCount) : 5;
-    const finalRole = typeof role === 'string' ? role.trim() : '';
+    const finalRole = typeof role === 'string' ? sanitizePromptInput(role) : '';
 
     // Parse resume details for detailed logging
     const parsed = parseResumeText(resume.resumeText);
@@ -154,7 +170,7 @@ export const handleGenerateCoverLetterStandalone = async (req, res) => {
     } else {
       // Create inline virtual/mock resume object
       resumeObj = {
-        resumeText: typeof resumeText === 'string' ? resumeText : '',
+        resumeText: typeof resumeText === 'string' ? sanitizePromptInput(resumeText) : '',
         skills: [],
         name: req.user ? `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || 'Candidate' : 'Candidate',
         email: req.user ? req.user.email : ''
@@ -162,10 +178,10 @@ export const handleGenerateCoverLetterStandalone = async (req, res) => {
     }
 
     const result = await aiGeneratorService.generateCoverLetter(resumeObj, {
-      companyName: typeof companyName === 'string' ? companyName.trim() : '',
-      roleTitle: typeof roleTitle === 'string' ? roleTitle.trim() : '',
-      jobDescription: typeof jobDescription === 'string' ? jobDescription.trim() : '',
-      tone: typeof tone === 'string' ? tone.trim() : 'Professional'
+      companyName: sanitizePromptInput(companyName),
+      roleTitle: sanitizePromptInput(roleTitle),
+      jobDescription: sanitizePromptInput(jobDescription),
+      tone: sanitizePromptInput(tone) || 'Professional'
     });
 
     return res.status(200).json(result);
@@ -205,7 +221,7 @@ export const handleGenerateInterviewQuestionsStandalone = async (req, res) => {
     } else {
       // Create inline virtual/mock resume object
       resumeObj = {
-        resumeText: typeof resumeText === 'string' ? resumeText : '',
+        resumeText: typeof resumeText === 'string' ? sanitizePromptInput(resumeText) : '',
         skills: [],
         name: req.user ? `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || 'Candidate' : 'Candidate',
         email: req.user ? req.user.email : ''
@@ -222,7 +238,7 @@ export const handleGenerateInterviewQuestionsStandalone = async (req, res) => {
     const targetType = ['Technical', 'HR', 'Mixed'].includes(interviewType) ? interviewType : 'Technical';
     const targetDifficulty = ['Easy', 'Medium', 'Hard'].includes(difficulty) ? difficulty : 'Medium';
     const targetNumber = [5, 10, 15].includes(Number(questionCount)) ? Number(questionCount) : 5;
-    const finalRole = typeof role === 'string' ? role.trim() : '';
+    const finalRole = typeof role === 'string' ? sanitizePromptInput(role) : '';
 
     const result = await aiGeneratorService.generateInterviewQuestions(resumeObj, {
       type: targetType,
