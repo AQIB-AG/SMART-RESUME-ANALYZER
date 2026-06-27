@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Resume from '../models/Resume.model.js';
+import User from '../models/User.model.js';
 import * as aiGeneratorService from '../services/ai-generator.service.js';
 import { parseResumeText } from '../utils/resume-parser.js';
 
@@ -51,6 +52,22 @@ export const handleGenerateCoverLetter = async (req, res) => {
       jobDescription: sanitizePromptInput(jobDescription),
       tone: sanitizePromptInput(tone) || 'Professional'
     });
+
+    // Update user stats and activity
+    try {
+      await User.findByIdAndUpdate(userId, {
+        $inc: { coverLettersCount: 1 },
+        $push: {
+          activities: {
+            type: 'cover_letter_generated',
+            details: companyName ? `for ${companyName}` : '',
+            timestamp: new Date()
+          }
+        }
+      });
+    } catch (actErr) {
+      console.error('Failed to log cover letter activity:', actErr);
+    }
 
     return res.status(200).json(result);
   } catch (error) {
@@ -132,6 +149,22 @@ export const handleGenerateInterviewQuestions = async (req, res) => {
     console.log(`  * Question Count:    ${result.questions?.length || 0}`);
     console.log("==================================================\n");
 
+    // Update user stats and activity
+    try {
+      await User.findByIdAndUpdate(userId, {
+        $inc: { mockInterviewsCount: 1 },
+        $push: {
+          activities: {
+            type: 'mock_interview_started',
+            details: finalRole ? `for ${finalRole}` : '',
+            timestamp: new Date()
+          }
+        }
+      });
+    } catch (actErr) {
+      console.error('Failed to log interview activity:', actErr);
+    }
+
     return res.status(200).json(result);
   } catch (error) {
     console.error('Error generating interview questions:', error);
@@ -160,7 +193,9 @@ export const handleGenerateCoverLetterStandalone = async (req, res) => {
       if (!dbResume) {
         return res.status(404).json({ success: false, error: 'Resume not found' });
       }
-      // Authorization check
+      if (!req.user) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
       const userId = req.user.id;
       const userRole = req.user.role;
       if (userRole !== 'admin' && dbResume.userId.toString() !== userId.toString()) {
@@ -183,6 +218,25 @@ export const handleGenerateCoverLetterStandalone = async (req, res) => {
       jobDescription: sanitizePromptInput(jobDescription),
       tone: sanitizePromptInput(tone) || 'Professional'
     });
+
+    // Update user stats and activity
+    if (req.user) {
+      try {
+        const userId = req.user.id;
+        await User.findByIdAndUpdate(userId, {
+          $inc: { coverLettersCount: 1 },
+          $push: {
+            activities: {
+              type: 'cover_letter_generated',
+              details: companyName ? `for ${companyName}` : '',
+              timestamp: new Date()
+            }
+          }
+        });
+      } catch (actErr) {
+        console.error('Failed to log standalone cover letter activity:', actErr);
+      }
+    }
 
     return res.status(200).json(result);
   } catch (error) {
@@ -211,7 +265,9 @@ export const handleGenerateInterviewQuestionsStandalone = async (req, res) => {
       if (!dbResume) {
         return res.status(404).json({ success: false, error: 'Resume not found' });
       }
-      // Authorization check
+      if (!req.user) {
+        return res.status(401).json({ success: false, error: 'Authentication required' });
+      }
       const userId = req.user.id;
       const userRole = req.user.role;
       if (userRole !== 'admin' && dbResume.userId.toString() !== userId.toString()) {
@@ -246,6 +302,25 @@ export const handleGenerateInterviewQuestionsStandalone = async (req, res) => {
       number: targetNumber,
       targetRole: finalRole
     });
+
+    // Update user stats and activity
+    if (req.user) {
+      try {
+        const userId = req.user.id;
+        await User.findByIdAndUpdate(userId, {
+          $inc: { mockInterviewsCount: 1 },
+          $push: {
+            activities: {
+              type: 'mock_interview_started',
+              details: finalRole ? `for ${finalRole}` : '',
+              timestamp: new Date()
+            }
+          }
+        });
+      } catch (actErr) {
+        console.error('Failed to log standalone interview activity:', actErr);
+      }
+    }
 
     return res.status(200).json(result);
   } catch (error) {

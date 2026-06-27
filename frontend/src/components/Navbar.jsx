@@ -14,7 +14,7 @@ const Navbar = () => {
   const navItems = [
     { name: 'Features', path: '/', hash: '#features' },
     { name: 'How It Works', path: '/', hash: '#how-it-works' },
-    { name: 'Pricing', path: '/', hash: '#pricing' },
+    { name: 'Analyze Resume', path: '/', hash: '#upload-section' },
   ];
 
   const handleHashNavigation = (e, item) => {

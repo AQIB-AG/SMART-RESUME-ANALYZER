@@ -4,7 +4,15 @@ import {
   login,
   logout,
   getProfile,
-  updateProfile
+  updateProfile,
+  changePassword,
+  deleteAccount,
+  saveCoverLetter,
+  getSavedCoverLetters,
+  deleteSavedCoverLetter,
+  saveInterview,
+  getSavedInterviews,
+  deleteSavedInterview
 } from '../controllers/auth.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { validate, registerValidation, loginValidation } from '../utils/validation.utils.js';
@@ -19,6 +27,16 @@ router.post('/login', validate(loginValidation), login);
 router.post('/logout', authenticate, logout);
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
+router.put('/change-password', authenticate, changePassword);
+router.delete('/delete-account', authenticate, deleteAccount);
+
+// Saved Templates
+router.post('/save-cover-letter', authenticate, saveCoverLetter);
+router.get('/saved-cover-letters', authenticate, getSavedCoverLetters);
+router.delete('/saved-cover-letters/:id', authenticate, deleteSavedCoverLetter);
+router.post('/save-interview', authenticate, saveInterview);
+router.get('/saved-interviews', authenticate, getSavedInterviews);
+router.delete('/saved-interviews/:id', authenticate, deleteSavedInterview);
 
 export default router;
 

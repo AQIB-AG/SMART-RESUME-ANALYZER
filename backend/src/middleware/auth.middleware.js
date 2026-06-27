@@ -40,6 +40,32 @@ export const authenticate = (req, res, next) => {
 };
 
 /**
+ * Middleware to optionally verify JWT token (continues as guest if token is missing or invalid)
+ */
+export const authenticateOptional = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = {
+          id: decoded.id,
+          email: decoded.email,
+          role: decoded.role
+        };
+      } catch (error) {
+        // Invalid token is ignored to proceed as guest
+      }
+    }
+    next();
+  } catch (error) {
+    next();
+  }
+};
+
+/**
  * Middleware to check user roles
  */
 export const authorize = (...allowedRoles) => {

@@ -1,15 +1,87 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { resumeAPI } from '../services/api';
+import { resumeAPI, authAPI } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
-import { Upload, RefreshCw, Clock, ArrowRight, TrendingUp, Target, CheckCircle, AlertCircle, FileText, Mic } from 'lucide-react';
+import { Upload, RefreshCw, Clock, ArrowRight, TrendingUp, Target, CheckCircle, AlertCircle, FileText, Mic, X, Download, Loader2, Copy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+
+// Global iframe-based PDF printing helper
+const printPdf = (title, htmlContent) => {
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: #1e293b;
+            padding: 40px;
+            margin: 0;
+          }
+          h1 {
+            color: #4f46e5;
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 0;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+          }
+          pre {
+            white-space: pre-wrap;
+            font-family: inherit;
+            font-size: 15px;
+            color: #334155;
+          }
+          .meta {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: -20px;
+            margin-bottom: 30px;
+          }
+        </style>
+      </head>
+      <body>
+        ${htmlContent}
+      </body>
+    </html>
+  `);
+  doc.close();
+
+  setTimeout(() => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 500);
+  }, 300);
+};
 
 const Dashboard = () => {
   const [resumes, setResumes] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Saved Templates States
+  const [savedCoverLetters, setSavedCoverLetters] = useState([]);
+  const [savedInterviews, setSavedInterviews] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [selectedSavedCL, setSelectedSavedCL] = useState(null);
+  const [selectedSavedInterview, setSelectedSavedInterview] = useState(null);
+
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const navigate = useNavigate();
@@ -24,6 +96,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchResumes();
+    fetchSavedTemplates();
     
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -33,6 +106,49 @@ const Dashboard = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const fetchSavedTemplates = async () => {
+    try {
+      const clRes = await authAPI.getSavedCoverLetters();
+      if (clRes.data?.success !== false) {
+        setSavedCoverLetters(clRes.data?.data || clRes.data || []);
+      }
+      const intRes = await authAPI.getSavedInterviews();
+      if (intRes.data?.success !== false) {
+        setSavedInterviews(intRes.data?.data || intRes.data || []);
+      }
+    } catch (e) {
+      console.error('Failed to load saved templates:', e);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const handleDeleteCL = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this saved cover letter?')) return;
+    try {
+      const res = await authAPI.deleteSavedCoverLetter(id);
+      if (res.data?.success !== false) {
+        setSavedCoverLetters(prev => prev.filter(item => item._id !== id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteInterview = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this saved mock interview session?')) return;
+    try {
+      const res = await authAPI.deleteSavedInterview(id);
+      if (res.data?.success !== false) {
+        setSavedInterviews(prev => prev.filter(item => item._id !== id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const truncateText = (text, maxLength = 12) => {
     if (!text) return '';
@@ -594,7 +710,197 @@ const Dashboard = () => {
             </div>
           )}
         </motion.div>
+
+        {/* Saved Templates Section */}
+        <div className="grid lg:grid-cols-2 gap-6 mt-8">
+          
+          {/* Saved Cover Letters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50"
+          >
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 font-heading flex items-center gap-2">
+              <FileText className="w-5 h-5 text-indigo-500" />
+              Saved Cover Letters
+            </h2>
+
+            {loadingTemplates ? (
+              <div className="flex items-center justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+            ) : savedCoverLetters.length === 0 ? (
+              <div className="text-center py-10 text-sm text-gray-400 italic">No saved cover letters found.</div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                {savedCoverLetters.map((cl) => (
+                  <div
+                    key={cl._id}
+                    onClick={() => setSelectedSavedCL(cl)}
+                    className="p-4 bg-white/60 dark:bg-charcoal-900/40 rounded-xl hover:shadow border border-gray-150 dark:border-charcoal-750 flex justify-between items-center cursor-pointer transition-all"
+                  >
+                    <div className="truncate text-left pr-4">
+                      <p className="font-semibold text-gray-900 dark:text-white truncate">{cl.companyName || 'Target Company'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{cl.roleTitle || 'Applicant Role'}</p>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteCL(cl._id, e)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-charcoal-850 rounded-lg transition-colors"
+                      title="Delete Cover Letter"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+          {/* Saved Interviews */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="glass bg-white/80 dark:bg-charcoal-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-charcoal-700/50"
+          >
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 font-heading flex items-center gap-2">
+              <Mic className="w-5 h-5 text-indigo-500" />
+              Saved Mock Interviews
+            </h2>
+
+            {loadingTemplates ? (
+              <div className="flex items-center justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+            ) : savedInterviews.length === 0 ? (
+              <div className="text-center py-10 text-sm text-gray-400 italic">No saved mock interview sessions.</div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+                {savedInterviews.map((intv) => (
+                  <div
+                    key={intv._id}
+                    onClick={() => setSelectedSavedInterview(intv)}
+                    className="p-4 bg-white/60 dark:bg-charcoal-900/40 rounded-xl hover:shadow border border-gray-150 dark:border-charcoal-750 flex justify-between items-center cursor-pointer transition-all"
+                  >
+                    <div className="truncate text-left pr-4">
+                      <p className="font-semibold text-gray-900 dark:text-white truncate">{intv.role || 'Job Role'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{intv.difficulty} • {intv.questions?.length || 0} Qs</p>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteInterview(intv._id, e)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-charcoal-850 rounded-lg transition-colors"
+                      title="Delete Mock Interview"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+        </div>
+
       </div>
+
+      {/* Cover Letter Details Modal */}
+      {selectedSavedCL && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-charcoal-800 rounded-2xl p-6 max-w-2xl w-full shadow-2xl border border-white/20 dark:border-charcoal-700/50 max-h-[85vh] flex flex-col">
+            <div className="flex justify-between items-start mb-4 border-b border-gray-100 dark:border-charcoal-750 pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white font-heading">{selectedSavedCL.companyName || 'Target Company'}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{selectedSavedCL.roleTitle}</p>
+              </div>
+              <button onClick={() => setSelectedSavedCL(null)} className="p-1 hover:bg-gray-150 dark:hover:bg-charcoal-700 rounded-lg">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed pr-2 my-2 font-sans bg-slate-50 dark:bg-charcoal-900/50 p-4 rounded-xl text-left">
+              {selectedSavedCL.content}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-charcoal-750 mt-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(selectedSavedCL.content);
+                  alert('Copied to clipboard');
+                }}
+                className="px-4 py-2 border border-gray-200 dark:border-charcoal-700 rounded-xl text-xs hover:bg-slate-50 dark:hover:bg-charcoal-900 flex items-center gap-1.5 dark:text-gray-300"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copy Text
+              </button>
+              <button
+                onClick={() => {
+                  const html = `<h1>Cover Letter</h1><p class="meta">For ${selectedSavedCL.companyName} - ${selectedSavedCL.roleTitle}</p><pre>${selectedSavedCL.content}</pre>`;
+                  printPdf('Saved_Cover_Letter', html);
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 flex items-center gap-1.5"
+              >
+                Print PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mock Interview Details Modal */}
+      {selectedSavedInterview && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[150] p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-charcoal-800 rounded-2xl p-6 max-w-2xl w-full shadow-2xl border border-white/20 dark:border-charcoal-700/50 max-h-[85vh] flex flex-col">
+            <div className="flex justify-between items-start mb-4 border-b border-gray-100 dark:border-charcoal-750 pb-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white font-heading">{selectedSavedInterview.role || 'Job Role'}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Difficulty: {selectedSavedInterview.difficulty}</p>
+              </div>
+              <button onClick={() => setSelectedSavedInterview(null)} className="p-1 hover:bg-gray-150 dark:hover:bg-charcoal-700 rounded-lg">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto space-y-4 my-2 pr-2">
+              {selectedSavedInterview.questions?.map((q, idx) => (
+                <div key={idx} className="p-4 bg-slate-50 dark:bg-charcoal-900/50 border border-gray-150 dark:border-charcoal-750 rounded-xl space-y-2 text-sm text-left">
+                  <p className="font-semibold text-gray-900 dark:text-white">Q{idx + 1}: {q.question}</p>
+                  {q.answer && (
+                    <p className="text-xs text-gray-600 dark:text-gray-300 pl-4 border-l-2 border-indigo-500"><strong className="text-gray-500">Your Answer: </strong>{q.answer}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-charcoal-750 mt-2">
+              <button
+                onClick={() => {
+                  let text = '';
+                  selectedSavedInterview.questions.forEach((q, idx) => { text += `Q${idx + 1}: ${q.question}\n\n`; });
+                  navigator.clipboard.writeText(text);
+                  alert('Questions copied');
+                }}
+                className="px-4 py-2 border border-gray-200 dark:border-charcoal-700 rounded-xl text-xs hover:bg-slate-50 dark:hover:bg-charcoal-900 flex items-center gap-1.5 dark:text-gray-300"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copy Questions
+              </button>
+              <button
+                onClick={() => {
+                  let html = `<h1>Saved Mock Interview Session</h1><p class="meta">Role: ${selectedSavedInterview.role} | Difficulty: ${selectedSavedInterview.difficulty}</p>`;
+                  selectedSavedInterview.questions.forEach((q, idx) => {
+                    html += `
+                      <div class="question-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 20px; background-color: #f8fafc;">
+                        <div style="font-weight: 700; font-size: 16px; color: #4f46e5; margin-bottom: 8px;">Q${idx + 1}: ${q.question}</div>
+                      </div>
+                    `;
+                  });
+                  printPdf('Saved_Mock_Interview', html);
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 flex items-center gap-1.5"
+              >
+                Print PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

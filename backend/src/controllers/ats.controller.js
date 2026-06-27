@@ -1,4 +1,5 @@
 import Resume from '../models/Resume.model.js';
+import User from '../models/User.model.js';
 import { extractTextFromPdf, performAtsAnalysis, getSkillSuggestions } from '../services/ats.service.js';
 import { analyzeResumeWithAI, generateRecruiterReview, generateFallbackRecruiterReview, validateResumeWithAI } from '../ai/ai.service.js';
 import path from 'path';
@@ -15,7 +16,7 @@ export const analyzeResumeForATS = async (req, res) => {
       });
     }
 
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
     const filePath = req.file.path;
     const fileName = req.file.filename;
     const originalFileName = req.file.originalname;
@@ -200,37 +201,66 @@ export const analyzeResumeForATS = async (req, res) => {
       );
     }
 
-    const resume = new Resume({
-      name: req.user.first_name + ' ' + req.user.last_name,
-      email: req.user.email,
-      skills,
-      resumeText,
-      atsScore: finalScore,
-      feedback: finalFeedback,
-      filePath,
-      fileName,
-      originalFileName,
-      fileSize,
-      userId,
-      bestFitRole: aiResult.bestFitRole,
-      jobMatchPercentage: aiResult.jobMatchPercentage,
-      skillGaps: aiResult.skillGaps,
-      strengthAreas: aiResult.strengthAreas,
-      aiExplanation: aiResult.aiExplanation,
-      aiUsed: aiResult.aiUsed,
-      jobDescriptionUsed: aiResult.jobDescriptionUsed,
-      recruiterReview
-    });
+    let savedResumeId = null;
+    if (userId) {
+      const resume = new Resume({
+        name: req.user ? `${req.user.first_name} ${req.user.last_name}` : 'Guest User',
+        email: req.user ? req.user.email : 'guest@example.com',
+        skills,
+        resumeText,
+        atsScore: finalScore,
+        feedback: finalFeedback,
+        filePath,
+        fileName,
+        originalFileName,
+        fileSize,
+        userId,
+        bestFitRole: aiResult.bestFitRole,
+        jobMatchPercentage: aiResult.jobMatchPercentage,
+        skillGaps: aiResult.skillGaps,
+        strengthAreas: aiResult.strengthAreas,
+        aiExplanation: aiResult.aiExplanation,
+        aiUsed: aiResult.aiUsed,
+        jobDescriptionUsed: aiResult.jobDescriptionUsed,
+        recruiterReview
+      });
 
-    const savedResume = await resume.save();
-    await Resume.findByIdAndUpdate(savedResume._id, { status: 'completed' });
+      const savedResume = await resume.save();
+      await Resume.findByIdAndUpdate(savedResume._id, { status: 'completed' });
+      savedResumeId = savedResume._id.toString();
+
+      // Update user activity
+      try {
+        await User.findByIdAndUpdate(userId, {
+          $push: {
+            activities: {
+              type: 'resume_analyzed',
+              details: `ATS ${finalScore}%`,
+              timestamp: new Date()
+            }
+          }
+        });
+      } catch (actErr) {
+        console.error('Failed to log resume analysis activity:', actErr);
+      }
+    } else {
+      // Guest: clean up temp file immediately to save disk space
+      if (filePath) {
+        try {
+          const fs = await import('fs');
+          await fs.promises.unlink(filePath).catch(console.error);
+        } catch (unlinkError) {
+          console.error('Failed to delete guest temp file:', unlinkError);
+        }
+      }
+    }
 
     const responsePayload = {
       success: true,
       score: finalScore,
       atsScore: finalScore,
       feedback: finalFeedback,
-      resumeId: savedResume._id.toString(),
+      resumeId: savedResumeId,
       text: resumeText,
       method: extractionMethod,
       pagesProcessed,

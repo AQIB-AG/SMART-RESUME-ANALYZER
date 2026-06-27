@@ -31,7 +31,112 @@ const userSchema = new mongoose.Schema({
   is_active: {
     type: Boolean,
     default: true
-  }
+  },
+  // Profile Fields
+  profilePicture: {
+    type: String,
+    default: ''
+  },
+  phone: {
+    type: String,
+    default: ''
+  },
+  college: {
+    type: String,
+    default: ''
+  },
+  aboutMe: {
+    type: String,
+    default: ''
+  },
+  linkedin: {
+    type: String,
+    default: ''
+  },
+  github: {
+    type: String,
+    default: ''
+  },
+  portfolio: {
+    type: String,
+    default: ''
+  },
+  location: {
+    type: String,
+    default: ''
+  },
+  resumeHeadline: {
+    type: String,
+    default: ''
+  },
+  careerGoal: {
+    type: String,
+    default: ''
+  },
+  // Settings Preferences
+  resumeAnalysisNotifications: {
+    type: Boolean,
+    default: true
+  },
+  coverLetterNotifications: {
+    type: Boolean,
+    default: true
+  },
+  mockInterviewNotifications: {
+    type: Boolean,
+    default: true
+  },
+  browserNotifications: {
+    type: Boolean,
+    default: true
+  },
+  emailNotifications: {
+    type: Boolean,
+    default: true
+  },
+  profileVisibility: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public'
+  },
+  // Activity Logging & Counters
+  activities: [{
+    type: { type: String, required: true },
+    details: { type: String, default: '' },
+    timestamp: { type: Date, default: Date.now }
+  }],
+  coverLettersCount: {
+    type: Number,
+    default: 0
+  },
+  mockInterviewsCount: {
+    type: Number,
+    default: 0
+  },
+  // Session details
+  lastLogin: {
+    type: Date
+  },
+  loginDevice: {
+    type: String,
+    default: 'Web Browser'
+  },
+  savedCoverLetters: [{
+    title: { type: String, default: 'Untitled Cover Letter' },
+    companyName: { type: String, default: '' },
+    roleTitle: { type: String, default: '' },
+    content: { type: String, default: '' },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  savedMockInterviews: [{
+    role: { type: String, default: '' },
+    difficulty: { type: String, default: 'Medium' },
+    questions: [{
+      question: { type: String },
+      answer: { type: String, default: '' }
+    }],
+    createdAt: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true
 });

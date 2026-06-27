@@ -46,6 +46,14 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   getProfile: () => api.get('/auth/profile'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  changePassword: (data) => api.put('/auth/change-password', data),
+  deleteAccount: () => api.delete('/auth/delete-account'),
+  saveCoverLetter: (data) => api.post('/auth/save-cover-letter', data),
+  getSavedCoverLetters: () => api.get('/auth/saved-cover-letters'),
+  deleteSavedCoverLetter: (id) => api.delete(`/auth/saved-cover-letters/${id}`),
+  saveInterview: (data) => api.post('/auth/save-interview', data),
+  getSavedInterviews: () => api.get('/auth/saved-interviews'),
+  deleteSavedInterview: (id) => api.delete(`/auth/saved-interviews/${id}`),
 };
 
 // Resume API
